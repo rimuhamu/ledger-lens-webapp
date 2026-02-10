@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@layer base {
+  :root {
+    --background: 226 50% 7%;
+    --foreground: 210 40% 98%;
+    --card: 224 33% 11%;
+    --card-foreground: 210 40% 98%;
+    --popover: 224 33% 11%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 224 25% 15%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 224 25% 17%;
+    --muted-foreground: 218 11% 65%;
+    --accent: 224 25% 17%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 224 20% 18%;
+    --input: 224 20% 18%;
+    --ring: 217 91% 60%;
+    --chart-1: 217 91% 60%;
+    --chart-2: 160 84% 39%;
+    --chart-3: 262 83% 58%;
+    --chart-4: 38 92% 50%;
+    --chart-5: 330 81% 60%;
+    --radius: 0.5rem;
+    --success: 160 84% 39%;
+    --warning: 38 92% 50%;
+    --sidebar-background: 224 33% 11%;
+    --sidebar-foreground: 218 11% 65%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 224 25% 15%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 224 20% 18%;
+    --sidebar-ring: 217 91% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
