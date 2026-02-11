@@ -22,4 +22,19 @@ export const analysisAPI = {
 
     return response.data
   },
+
+  /**
+   * Get the analysis result for a document
+   */
+  async getAnalysis(documentId: string): Promise<AnalysisResponse | null> {
+    try {
+      const response = await apiClient.get<AnalysisResponse>(
+        `/documents/${documentId}/analysis`
+      )
+      return response.data
+    } catch (error) {
+      // Return null if analysis not found or error
+      return null
+    }
+  }
 }

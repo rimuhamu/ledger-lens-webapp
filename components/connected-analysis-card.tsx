@@ -1,0 +1,114 @@
+"use client"
+
+import { useEffect, useState } from "react"
+import { AnalysisCard } from "@/components/analysis-card"
+import { analysisAPI } from "@/lib/api"
+import type { AnalysisResponse } from "@/lib/api/types"
+import { Loader2 } from "lucide-react"
+
+interface ConnectedAnalysisCardProps {
+  documentId: string
+  ticker: string
+  filename: string
+  createdAt: string
+}
+
+export function ConnectedAnalysisCard({
+  documentId,
+  ticker,
+  filename,
+  createdAt,
+}: ConnectedAnalysisCardProps) {
+  const [analysis, setAnalysis] = useState<AnalysisResponse | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchAnalysis = async () => {
+      try {
+        const data = await analysisAPI.getAnalysis(documentId)
+        if (data && data.intelligence_hub) {
+          setAnalysis(data)
+        }
+      } catch (error) {
+        console.error("Failed to fetch analysis:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchAnalysis()
+  }, [documentId])
+
+  if (loading) {
+    return (
+      <div className="rounded-xl border bg-card text-card-foreground shadow-sm h-[320px] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  const handleAnalyze = async (e: React.MouseEvent) => {
+    e.preventDefault() // Prevent navigation
+    e.stopPropagation()
+    
+    setLoading(true)
+    try {
+      const result = await analysisAPI.analyze(
+        documentId, 
+        "Provide a comprehensive financial analysis of this document."
+      )
+      
+      if (result && result.intelligence_hub) {
+        setAnalysis(result)
+      }
+    } catch (error) {
+      console.error("Analysis failed:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Determine sentiment properties based on analysis data
+  const sentimentScore = analysis?.intelligence_hub?.sentiment?.score || 0
+  
+  let sentiment: "bullish" | "bearish" | "neutral" = "neutral"
+  if (sentimentScore >= 60) sentiment = "bullish"
+  if (sentimentScore <= 40) sentiment = "bearish"
+
+  // If no analysis available yet, show as 'Processing' or 'New'
+  const reportType = analysis ? "Analyzed Report" : "Ready to Analyze"
+
+  // Create a custom footer or overlay for the "Analyze" button if needed
+  // For now, we'll assume the user clicks the card to analyze if it's not ready
+  // But AnalysisCard navigates. So we might need to intercept.
+  
+  // Actually, let's just make the card interactive.
+  // If we can't change AnalysisCard internals, we wrap it.
+  
+  return (
+    <div className="relative group">
+       <AnalysisCard
+        ticker={ticker}
+        company={filename}
+        reportType={reportType}
+        sentimentScore={sentimentScore}
+        sentiment={sentiment}
+        date={new Date(createdAt).toLocaleDateString()}
+        href={analysis ? `/analysis?id=${documentId}` : "#"}
+      />
+      {!analysis && !loading && (
+        <button
+            onClick={handleAnalyze}
+            className="absolute bottom-4 right-4 z-10 bg-primary text-primary-foreground px-3 py-1 text-xs rounded-md shadow hover:bg-primary/90 transition-colors"
+        >
+            Analyze
+        </button>
+      )}
+      {loading && !analysis && (
+          <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-20 backdrop-blur-sm rounded-xl">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          </div>
+      )}
+    </div>
+  )
+}

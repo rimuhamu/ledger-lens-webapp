@@ -6,6 +6,7 @@ import { FileText, Clock, Sparkles, Search, Upload, Loader2 } from "lucide-react
 import { AppShell } from "@/components/app-shell"
 import { StatCard } from "@/components/stat-card"
 import { AnalysisCard, NewAnalysisCard } from "@/components/analysis-card"
+import { ConnectedAnalysisCard } from "@/components/connected-analysis-card"
 import {
   IntelligenceFeed,
   PortfolioSentimentMap,
@@ -120,15 +121,12 @@ export default function DashboardPage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {documents.map((doc) => (
-                <AnalysisCard 
+                <ConnectedAnalysisCard 
                     key={doc.document_id}
+                    documentId={doc.document_id}
                     ticker={doc.ticker}
-                    company={doc.filename} // Using filename as company name placeholder
-                    reportType="Uploaded PDF"
-                    sentimentScore={0} // Placeholder
-                    sentiment="neutral" // Placeholder
-                    date={new Date(doc.created_at).toLocaleDateString()}
-                    href={`/analysis?id=${doc.document_id}`} // Assuming we might want to reload analysis for it later
+                    filename={doc.filename}
+                    createdAt={doc.created_at}
                 />
                 ))}
                 <NewAnalysisCard />
