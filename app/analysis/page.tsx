@@ -7,52 +7,66 @@ import { AnalysisSkeleton } from "@/components/analysis-skeleton"
 import { SentimentScore } from "@/components/sentiment-score"
 import { RiskIndicator } from "@/components/risk-indicator"
 import { KeyHighlights } from "@/components/key-highlights"
-import { Sparkles, ArrowRight } from "lucide-react"
+import { Sparkles } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-
-const mockHighlights = [
-  { label: "YoY Revenue Growth", value: "+12.4%", trend: "up" as const },
-  { label: "Operating Margin", value: "28.0%", trend: "up" as const },
-  { label: "Free Cash Flow", value: "$4.2B", trend: "up" as const },
-]
-
-const mockRiskMetrics = [
-  { label: "Debt/Equity Ratio", value: "0.45", ratio: 0.45 },
-  { label: "Current Ratio", value: "2.1", ratio: 0.7 },
-]
-
-const suggestedQuestions = [
-  "Summarize the Data Center segment",
-  "Compare with 2023 performance",
-  "Break down ESG commitments",
-]
+import { documentsAPI, analysisAPI } from "@/lib/api"
+import { toast } from "sonner"
+import type { AnalysisResponse } from "@/lib/api/types"
 
 export default function AnalysisPage() {
   const [isProcessing, setIsProcessing] = useState(false)
-  const [showResults, setShowResults] = useState(false)
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResponse | null>(null)
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async (file: File | null, ticker: string) => {
+    if (!file) {
+      toast.error("Please upload a PDF file.")
+      return
+    }
+    if (!ticker) {
+      toast.error("Please enter a ticker symbol.")
+      return
+    }
+
     setIsProcessing(true)
-    setShowResults(false)
-    setTimeout(() => {
+    setAnalysisResult(null)
+
+    try {
+      // 1. Upload Document
+      toast.info("Uploading document...")
+      const uploadResult = await documentsAPI.upload(file, ticker)
+      
+      // 2. Analyze Document
+      toast.info("Analyzing document... This may take a minute.")
+      const analysis = await analysisAPI.analyze(
+        uploadResult.document_id,
+        "Provide a comprehensive financial analysis of this document."
+      )
+      
+      setAnalysisResult(analysis)
+      toast.success("Analysis complete!")
+    } catch (error: any) {
+      console.error("Analysis failed:", error)
+      toast.error(error.response?.data?.detail || "Analysis failed. Please try again.")
+    } finally {
       setIsProcessing(false)
-      setShowResults(true)
-    }, 3000)
+    }
   }
+
+  const { intelligence_hub } = analysisResult || {}
 
   return (
     <AppShell>
       <div className="p-6 lg:p-8 max-w-7xl mx-auto">
         <FileUploadZone onAnalyze={handleAnalyze} isProcessing={isProcessing} />
 
-        {(isProcessing || showResults) && (
+        {(isProcessing || analysisResult) && (
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mt-8">
             {/* Left Column - Analysis Results (60%) */}
             <div className="lg:col-span-3">
               {isProcessing ? (
                 <AnalysisSkeleton />
               ) : (
-                <AnalysisResults />
+                <AnalysisResults result={analysisResult!} />
               )}
             </div>
 
@@ -65,8 +79,9 @@ export default function AnalysisPage() {
                 </h3>
                 <div className="flex justify-center">
                   <SentimentScore
-                    score={isProcessing ? 0 : 84}
-                    description="Based on management commentary and outlook sections of the 10-K."
+                    score={isProcessing ? 0 : intelligence_hub?.sentiment.score || 0}
+                    description={intelligence_hub?.sentiment.description || "Analyzing sentiment..."}
+                    trend={intelligence_hub?.sentiment.change}
                   />
                 </div>
               </div>
@@ -89,7 +104,13 @@ export default function AnalysisPage() {
                     ))}
                   </div>
                 ) : (
-                  <KeyHighlights highlights={mockHighlights} />
+                  <KeyHighlights 
+                    highlights={(intelligence_hub?.key_highlights || []).map(h => ({
+                      label: h.text,
+                      value: h.metric_value || "", 
+                      trend: "neutral" // API doesn't return trend yet, default to neutral
+                    }))} 
+                  />
                 )}
               </div>
 
@@ -106,33 +127,21 @@ export default function AnalysisPage() {
                   </div>
                 ) : (
                   <RiskIndicator
-                    level="low"
-                    description="Financial stability metrics are within safe range."
-                    metrics={mockRiskMetrics}
+                    level={intelligence_hub?.risk.level.toLowerCase() as any || "low"}
+                    description={intelligence_hub?.risk.description || ""}
+                    metrics={(intelligence_hub?.risk_factors || []).map(r => ({
+                        label: r.name,
+                        value: r.severity,
+                        ratio: r.severity === 'HIGH' ? 0.9 : r.severity === 'MED' ? 0.5 : 0.2
+                    }))}
                   />
                 )}
               </div>
-
-              {/* AI Insight */}
-              {showResults && (
-                <div className="rounded-lg bg-emerald-900/20 border border-emerald-800/30 p-4">
-                  <p className="text-sm leading-relaxed">
-                    <span className="font-semibold text-primary">
-                      AI Insight:{" "}
-                    </span>
-                    <span className="text-emerald-300/90">
-                      Revenue growth is primarily driven by Cloud Services
-                      expansion. Operating leverage remains strong despite
-                      increased R&D spending.
-                    </span>
-                  </p>
-                </div>
-              )}
             </div>
           </div>
         )}
 
-        {!isProcessing && !showResults && (
+        {!isProcessing && !analysisResult && (
           <div className="mt-12 flex flex-col items-center justify-center text-center py-16">
             <div className="w-16 h-16 rounded-2xl bg-card border border-border flex items-center justify-center mb-4">
               <Sparkles className="w-7 h-7 text-muted-foreground" />
@@ -151,7 +160,7 @@ export default function AnalysisPage() {
   )
 }
 
-function AnalysisResults() {
+function AnalysisResults({ result }: { result: AnalysisResponse }) {
   return (
     <div className="rounded-xl border border-border bg-card p-6 border-l-4 border-l-primary">
       <div className="flex items-center justify-between mb-6">
@@ -160,11 +169,11 @@ function AnalysisResults() {
             Analysis Results
           </h3>
           <Badge className="bg-emerald-900/30 text-emerald-400 border-emerald-800/50 hover:bg-emerald-900/30 text-[10px] uppercase tracking-wider font-semibold">
-            Pass
+            {result.verification_status}
           </Badge>
         </div>
         <span className="text-xs text-muted-foreground font-mono">
-          Verified by LLM-4o-V2
+          Verified by LedgerLens AI
         </span>
       </div>
 
@@ -172,79 +181,37 @@ function AnalysisResults() {
         <h4 className="text-base font-semibold text-foreground mb-3">
           Executive Summary
         </h4>
-        <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-          The Annual Report 2024 reflects a period of significant digital
-          acceleration and strategic pivot towards{" "}
-          <a href="#" className="text-primary hover:text-primary/80 underline underline-offset-2">
-            AI-integrated banking services [14]
-          </a>
-          . The institution maintained its market leadership with a Tier 1
-          capital adequacy ratio of 22.4%, surpassing regional benchmarks by 340
-          basis points.
-        </p>
-
-        <h4 className="text-base font-semibold text-foreground mb-3">
-          Financial Performance Metrics
-        </h4>
-        <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-          Net Interest Margin (NIM) expanded slightly to 5.4%, driven by
-          efficient liquidity management despite a volatile interest rate
-          environment. Operating revenue saw an 11.2% YoY increase, primarily
-          bolstered by a{" "}
-          <a href="#" className="text-primary hover:text-primary/80 underline underline-offset-2">
-            15% surge in non-interest income [32]
-          </a>
-          , particularly from its digital transaction ecosystem.
-        </p>
-        <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-          Operating expenses remained well-contained with a Cost-to-Income Ratio
-          (CIR) of 36.8%. The management{"'"}s focus on operational excellence
-          through{" "}
-          <a href="#" className="text-primary hover:text-primary/80 underline underline-offset-2">
-            robotic process automation [45]
-          </a>{" "}
-          has begun yielding significant dividends in back-office efficiency.
-        </p>
-
-        <blockquote className="border-l-2 border-primary/50 pl-4 my-6 italic text-muted-foreground text-sm">
-          {
-            '"Our 2024 strategy was focused on resilience and technological edge. The results validate our commitment to the Data Center expansion, which is now the primary engine for our cloud-native banking platform."'
-          }
-        </blockquote>
-
-        <h4 className="text-base font-semibold text-foreground mb-3">
-          Strategic Outlook
-        </h4>
-        <p className="text-sm text-muted-foreground leading-relaxed mb-6">
-          Looking forward to 2025, the organization identifies the{" "}
-          <a href="#" className="text-primary hover:text-primary/80 underline underline-offset-2">
-            Data Center segment [61]
-          </a>{" "}
-          as a critical infrastructure pillar. With the completion of Phase III
-          in Q4 2024, the bank is positioned to offer localized cloud hosting
-          services to regional subsidiaries, potentially opening a new B2B
-          revenue stream.
-        </p>
+        <div className="text-sm text-muted-foreground leading-relaxed mb-4 whitespace-pre-wrap">
+          {result.answer}
+        </div>
+        
+        {/* Suggested Questions */}
+        {result.intelligence_hub.suggested_questions?.length > 0 && (
+            <div className="mt-6 pt-6 border-t border-border">
+                <h4 className="text-base font-semibold text-foreground mb-3">
+                    Suggested Follow-up Questions
+                </h4>
+                <ul className="list-disc pl-5 space-y-1">
+                    {result.intelligence_hub.suggested_questions.map((q, i) => (
+                        <li key={i} className="text-sm text-muted-foreground">{q}</li>
+                    ))}
+                </ul>
+            </div>
+        )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-6 pt-4 border-t border-border text-xs text-muted-foreground">
+      <div className="flex flex-wrap items-center gap-6 pt-4 border-t border-border mt-6 text-xs text-muted-foreground">
         <div>
           <span className="uppercase tracking-wider font-semibold block text-[10px] mb-0.5">
-            Ticker
+            Document ID
           </span>
-          <span className="font-mono text-foreground text-sm">BBCA.JK</span>
+          <span className="font-mono text-foreground text-sm">{result.metadata.document_id}</span>
         </div>
         <div>
           <span className="uppercase tracking-wider font-semibold block text-[10px] mb-0.5">
             Analysis Date
           </span>
-          <span className="text-foreground text-sm">October 24, 2024</span>
-        </div>
-        <div>
-          <span className="uppercase tracking-wider font-semibold block text-[10px] mb-0.5">
-            Confidence Score
-          </span>
-          <span className="text-emerald-400 text-sm font-semibold">98.4%</span>
+          <span className="text-foreground text-sm">{new Date().toLocaleDateString()}</span>
         </div>
       </div>
     </div>

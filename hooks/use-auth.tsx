@@ -24,6 +24,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        const token = localStorage.getItem('ledgerlens_auth_token')
+        if (!token) {
+          setUser(null)
+          return
+        }
+
         const userData = await authAPI.getMe()
         setUser(userData)
       } catch (error) {

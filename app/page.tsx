@@ -1,7 +1,8 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Link from "next/link"
-import { FileText, Clock, Sparkles, Search, Upload } from "lucide-react"
+import { FileText, Clock, Sparkles, Search, Upload, Loader2 } from "lucide-react"
 import { AppShell } from "@/components/app-shell"
 import { StatCard } from "@/components/stat-card"
 import { AnalysisCard, NewAnalysisCard } from "@/components/analysis-card"
@@ -11,78 +12,48 @@ import {
 } from "@/components/intelligence-feed"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-
-const recentAnalyses = [
-  {
-    ticker: "AAPL",
-    company: "Apple Inc.",
-    reportType: "FY 2023",
-    sentimentScore: 84,
-    sentiment: "bullish" as const,
-    date: "OCT 24, 2023",
-    href: "/reports/aapl-2023",
-  },
-  {
-    ticker: "TSLA",
-    company: "Tesla, Inc.",
-    reportType: "Q3 Report",
-    sentimentScore: 52,
-    sentiment: "neutral" as const,
-    date: "OCT 22, 2023",
-    href: "/reports/tsla-q3",
-  },
-  {
-    ticker: "NVDA",
-    company: "NVIDIA Corp.",
-    reportType: "Quarterly",
-    sentimentScore: 92,
-    sentiment: "bullish" as const,
-    date: "OCT 20, 2023",
-    href: "/reports/nvda-q3",
-  },
-  {
-    ticker: "META",
-    company: "Meta Platforms",
-    reportType: "Annual",
-    sentimentScore: 28,
-    sentiment: "bearish" as const,
-    date: "OCT 18, 2023",
-    href: "/reports/meta-2023",
-  },
-  {
-    ticker: "MSFT",
-    company: "Microsoft Corp.",
-    reportType: "10-K",
-    sentimentScore: 76,
-    sentiment: "bullish" as const,
-    date: "OCT 15, 2023",
-    href: "/reports/msft-10k",
-  },
-]
+import { useAuth } from "@/hooks/use-auth"
+import { documentsAPI } from "@/lib/api"
+import type { DocumentResponse } from "@/lib/api/types"
 
 const feedItems = [
   {
-    title: "Potential Risk Detected in AAPL",
+    title: "Start Analyze Reports",
     description:
-      "Section 7 (Risk Factors) shows a 14% increase in supply chain mentions compared to 2022.",
-    type: "risk" as const,
-  },
-  {
-    title: "NVDA Growth Projections",
-    description:
-      "AI models indicate strong correlation between AI R&D spend and forward EPS growth.",
+      "Upload your first annual report to get AI-powered insights.",
     type: "growth" as const,
   },
 ]
 
 export default function DashboardPage() {
+  const { user } = useAuth()
+  const [documents, setDocuments] = useState<DocumentResponse[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchDocuments = async () => {
+      try {
+        const docs = await documentsAPI.list()
+        setDocuments(docs)
+      } catch (error) {
+        console.error("Failed to fetch documents:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    if (user) {
+        fetchDocuments()
+    }
+  }, [user])
+
   return (
     <AppShell>
       <div className="p-6 lg:p-8 max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           <div>
             <h1 className="text-2xl lg:text-3xl font-bold text-foreground text-balance">
-              Welcome back, Alex
+              Welcome back, {user?.email?.split('@')[0] || 'User'}
             </h1>
             <p className="text-muted-foreground mt-1">
               {"Here's the latest intelligence from your analyzed portfolios."}
@@ -110,14 +81,14 @@ export default function DashboardPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
           <StatCard
-            title="Total Reports Processed"
-            value="1,284"
+            title="Total Reports"
+            value={documents.length.toString()}
             icon={FileText}
-            badge={{ text: "+12% vs LY", variant: "success" }}
+            badge={{ text: "Active", variant: "success" }}
           />
           <StatCard
             title="Last Analysis"
-            value="14 minutes ago"
+            value="Just now"
             icon={Clock}
             badge={{ text: "Real-time" }}
           />
@@ -132,7 +103,7 @@ export default function DashboardPage() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-xl font-bold text-foreground">
-              Recent Analyses
+              Recent Documents
             </h2>
             <Link
               href="/reports"
@@ -141,12 +112,28 @@ export default function DashboardPage() {
               View All
             </Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {recentAnalyses.map((analysis) => (
-              <AnalysisCard key={analysis.ticker} {...analysis} />
-            ))}
-            <NewAnalysisCard />
-          </div>
+          
+          {isLoading ? (
+             <div className="flex justify-center p-12">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+             </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {documents.map((doc) => (
+                <AnalysisCard 
+                    key={doc.document_id}
+                    ticker={doc.ticker}
+                    company={doc.filename} // Using filename as company name placeholder
+                    reportType="Uploaded PDF"
+                    sentimentScore={0} // Placeholder
+                    sentiment="neutral" // Placeholder
+                    date={new Date(doc.created_at).toLocaleDateString()}
+                    href={`/analysis?id=${doc.document_id}`} // Assuming we might want to reload analysis for it later
+                />
+                ))}
+                <NewAnalysisCard />
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

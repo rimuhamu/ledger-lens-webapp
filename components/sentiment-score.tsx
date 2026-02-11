@@ -8,6 +8,7 @@ interface SentimentScoreProps {
   label?: string
   description?: string
   size?: number
+  trend?: string
 }
 
 function getScoreColor(score: number) {
