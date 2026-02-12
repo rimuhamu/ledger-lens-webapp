@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { AppShell } from "@/components/app-shell"
 import { FileUploadZone } from "@/components/file-upload-zone"
@@ -16,7 +16,7 @@ import type { AnalysisResponse } from "@/lib/api/types"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 
-export default function AnalysisPage() {
+function AnalysisContent() {
   const searchParams = useSearchParams()
   const documentId = searchParams.get('id')
   const [isProcessing, setIsProcessing] = useState(false)
@@ -165,6 +165,61 @@ export default function AnalysisPage() {
                   />
                 )}
               </div>
+
+              {/* AI Confidence & Benchmarking */}
+              <div className="rounded-xl border border-border bg-card p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    AI Confidence & Benchmarking
+                  </h3>
+                  {analysisResult?.confidence_metrics?.overall_level && (
+                    <Badge variant="outline" className={
+                      analysisResult.confidence_metrics.overall_level === 'high' ? "text-emerald-400 border-emerald-800/50 bg-emerald-900/20" :
+                      analysisResult.confidence_metrics.overall_level === 'moderate' ? "text-amber-400 border-amber-800/50 bg-amber-900/20" :
+                      "text-red-400 border-red-800/50 bg-red-900/20"
+                    }>
+                      {analysisResult.confidence_metrics.overall_level.toUpperCase()} CONFIDENCE
+                    </Badge>
+                  )}
+                </div>
+
+                {isProcessing ? (
+                   <div className="space-y-4 animate-pulse">
+                      {[1, 2, 3].map(i => (
+                        <div key={i}>
+                          <div className="flex justify-between mb-2">
+                            <div className="h-3 w-20 bg-secondary rounded"/>
+                            <div className="h-3 w-10 bg-secondary rounded"/>
+                          </div>
+                          <div className="h-2 w-full bg-secondary rounded-full"/>
+                        </div>
+                      ))}
+                   </div>
+                ) : (
+                  <div className="space-y-5">
+                    {(analysisResult?.confidence_metrics?.metrics || []).map((metric, i) => (
+                      <div key={i}>
+                        <div className="flex justify-between text-sm mb-1.5">
+                          <span className="text-muted-foreground">{metric.label}</span>
+                          <span className="font-mono font-medium text-foreground">{metric.value}</span>
+                        </div>
+                        <div className="h-2 w-full bg-secondary/50 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-primary/70 rounded-full transition-all duration-500"
+                            style={{ width: `${Math.min(Math.max(metric.ratio * 100, 0), 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {(!analysisResult?.confidence_metrics?.metrics || analysisResult.confidence_metrics.metrics.length === 0) && (
+                         <p className="text-sm text-muted-foreground italic text-center py-2">
+                            Confidence metrics unavailable for this report.
+                         </p>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -185,6 +240,20 @@ export default function AnalysisPage() {
         )}
       </div>
     </AppShell>
+  )
+}
+
+export default function AnalysisPage() {
+  return (
+    <Suspense fallback={
+      <AppShell>
+        <div className="p-6 lg:p-8 max-w-7xl mx-auto">
+          <AnalysisSkeleton />
+        </div>
+      </AppShell>
+    }>
+      <AnalysisContent />
+    </Suspense>
   )
 }
 

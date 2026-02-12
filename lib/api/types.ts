@@ -76,10 +76,25 @@ export interface AIIntelligenceHubData {
   suggested_questions: string[]
 }
 
+export interface ConfidenceMetric {
+  label: string
+  value: string
+  ratio: number
+}
+
+export interface ConfidenceData {
+  overall_level: "low" | "moderate" | "high"
+  metrics: ConfidenceMetric[]
+}
+
 export interface AnalysisResponse {
   answer: string
   verification_status: 'PASS' | 'FAIL'
   intelligence_hub: AIIntelligenceHubData
+  confidence_metrics?: ConfidenceData
+  retrieval_scores?: number[]
+  retrieved_sources?: string[]
+  generation_logprobs?: number[]
   metadata: {
     document_id: string
   }

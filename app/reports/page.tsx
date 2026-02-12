@@ -102,8 +102,10 @@ export default function ReportsPage() {
                       ...r, 
                       sentiment, 
                       sentimentScore: score,
-                      // Calculate confidence based on score distance from 50 (simplistic proxy if not available)
-                      confidence: 85 + (Math.abs(score - 50) / 50) * 10,
+                      // Use actual confidence metric if available, otherwise fallback to calculation
+                      confidence: analysis.confidence_metrics?.metrics?.find(m => m.label === "AI Certainty")?.ratio 
+                        ? (analysis.confidence_metrics.metrics.find(m => m.label === "AI Certainty")!.ratio * 100)
+                        : (85 + (Math.abs(score - 50) / 50) * 10),
                       isLoading: false
                     } 
                   : r
