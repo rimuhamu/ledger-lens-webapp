@@ -13,6 +13,8 @@ import { Badge } from "@/components/ui/badge"
 import { documentsAPI, analysisAPI } from "@/lib/api"
 import { toast } from "sonner"
 import type { AnalysisResponse } from "@/lib/api/types"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 
 export default function AnalysisPage() {
   const searchParams = useSearchParams()
@@ -58,11 +60,9 @@ export default function AnalysisPage() {
     setAnalysisResult(null)
 
     try {
-      // 1. Upload Document
       toast.info("Uploading document...")
       const uploadResult = await documentsAPI.upload(file, ticker)
       
-      // 2. Analyze Document
       toast.info("Analyzing document... This may take a minute.")
       const analysis = await analysisAPI.analyze(
         uploadResult.document_id,
@@ -209,8 +209,13 @@ function AnalysisResults({ result }: { result: AnalysisResponse }) {
         <h4 className="text-base font-semibold text-foreground mb-3">
           Executive Summary
         </h4>
-        <div className="text-sm text-muted-foreground leading-relaxed mb-4 whitespace-pre-wrap">
-          {result.answer}
+        <div className="text-sm text-muted-foreground leading-relaxed mb-4">
+          <ReactMarkdown 
+            className="prose prose-invert max-w-none prose-p:leading-relaxed prose-headings:text-foreground prose-a:text-primary hover:prose-a:underline prose-strong:text-foreground prose-ul:my-4 prose-li:my-1" 
+            remarkPlugins={[remarkGfm]}
+          >
+            {result.answer}
+          </ReactMarkdown>
         </div>
         
         {/* Suggested Questions */}
