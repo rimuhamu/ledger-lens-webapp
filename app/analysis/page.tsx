@@ -135,8 +135,7 @@ export default function AnalysisPage() {
                   <KeyHighlights 
                     highlights={(intelligence_hub?.key_highlights || []).map(h => ({
                       label: h.text,
-                      value: h.metric_value || "", 
-                      trend: "neutral" // API doesn't return trend yet, default to neutral
+                      value: h.metric_value || "",
                     }))} 
                   />
                 )}
