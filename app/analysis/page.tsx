@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { AppShell } from "@/components/app-shell"
 import { FileUploadZone } from "@/components/file-upload-zone"
 import { AnalysisSkeleton } from "@/components/analysis-skeleton"
@@ -14,8 +15,34 @@ import { toast } from "sonner"
 import type { AnalysisResponse } from "@/lib/api/types"
 
 export default function AnalysisPage() {
+  const searchParams = useSearchParams()
+  const documentId = searchParams.get('id')
   const [isProcessing, setIsProcessing] = useState(false)
   const [analysisResult, setAnalysisResult] = useState<AnalysisResponse | null>(null)
+
+  // Load existing analysis if document ID is provided
+  useEffect(() => {
+    const loadAnalysis = async () => {
+      if (documentId) {
+        setIsProcessing(true)
+        try {
+          const analysis = await analysisAPI.getAnalysis(documentId)
+          if (analysis && analysis.intelligence_hub) {
+            setAnalysisResult(analysis)
+          } else {
+            toast.info("Analysis not yet available for this document.")
+          }
+        } catch (error: any) {
+          console.error("Failed to load analysis:", error)
+          toast.error("Failed to load analysis. The document may not have been analyzed yet.")
+        } finally {
+          setIsProcessing(false)
+        }
+      }
+    }
+
+    loadAnalysis()
+  }, [documentId])
 
   const handleAnalyze = async (file: File | null, ticker: string) => {
     if (!file) {
@@ -57,7 +84,8 @@ export default function AnalysisPage() {
   return (
     <AppShell>
       <div className="p-6 lg:p-8 max-w-7xl mx-auto">
-        <FileUploadZone onAnalyze={handleAnalyze} isProcessing={isProcessing} />
+        {/* Only show upload zone if not viewing an existing analysis */}
+        {!documentId && <FileUploadZone onAnalyze={handleAnalyze} isProcessing={isProcessing} />}
 
         {(isProcessing || analysisResult) && (
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mt-8">
