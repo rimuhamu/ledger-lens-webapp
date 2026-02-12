@@ -209,14 +209,13 @@ function AnalysisResults({ result }: { result: AnalysisResponse }) {
         <h4 className="text-base font-semibold text-foreground mb-3">
           Executive Summary
         </h4>
-        <div className="text-sm text-muted-foreground leading-relaxed mb-4">
-          <ReactMarkdown 
-            className="prose prose-invert max-w-none prose-p:leading-relaxed prose-headings:text-foreground prose-a:text-primary hover:prose-a:underline prose-strong:text-foreground prose-ul:my-4 prose-li:my-1" 
-            remarkPlugins={[remarkGfm]}
-          >
-            {result.answer}
-          </ReactMarkdown>
-        </div>
+        <div className="text-sm text-muted-foreground leading-relaxed mb-4 prose prose-invert max-w-none prose-p:leading-relaxed prose-headings:text-foreground prose-a:text-primary hover:prose-a:underline prose-strong:text-foreground prose-ul:my-4 prose-li:my-1">
+  <ReactMarkdown 
+    remarkPlugins={[remarkGfm]}
+  >
+    {result.answer}
+  </ReactMarkdown>
+</div>
         
         {/* Suggested Questions */}
         {result.intelligence_hub.suggested_questions?.length > 0 && (
