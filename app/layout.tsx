@@ -4,6 +4,7 @@ import { Inter, JetBrains_Mono } from "next/font/google"
 
 import "./globals.css"
 import { AuthProvider } from "@/hooks/use-auth"
+import { Toaster } from "@/components/ui/sonner"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -37,6 +38,7 @@ export default function RootLayout({
       <body className="font-sans antialiased" suppressHydrationWarning>
         <AuthProvider>
           {children}
+          <Toaster />
         </AuthProvider>
       </body>
     </html>

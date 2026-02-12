@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { documentsAPI, analysisAPI } from "@/lib/api"
+import { toast } from "sonner"
 import type { DocumentResponse, AnalysisResponse } from "@/lib/api/types"
 
 interface ReportData {
@@ -139,17 +140,39 @@ export default function ReportsPage() {
     e.preventDefault()
     e.stopPropagation()
 
-    if (!confirm("Are you sure you want to delete this report? This action cannot be undone.")) {
-      return
-    }
-
-    try {
-      await documentsAPI.delete(id)
-      setReports(prev => prev.filter(report => report.id !== id))
-    } catch (error) {
-      console.error("Failed to delete report:", error)
-      alert("Failed to delete report. Please try again.")
-    }
+    // No need for confirm dialog if we use toast with undo or just clear feedback
+    // But user asked for confirmation. We can use a sonner toast with action or just keep the confirm for now and show progress.
+    // "use toast to confirm deletion" -> this might mean using a toast to ask for confirmation, OR using toast to *acknowledge* the confirmation and show progress.
+    // Standard pattern: Click delete -> Confirm Dialog -> Toast Loading -> Toast Success/Error.
+    
+    // User said: "use toast to confirm deletion" - this is ambiguous. It could mean "replace window.confirm with a toast that has a confirm button".
+    // "and show the progress" -> implies async state.
+    
+    // Let's stick to window.confirm for safety unless requested otherwise, but maybe wrapping the delete action in a toast promise is what they primarily want for "show progress".
+    // Actually, "toast to confirm" sounds like "Toast: Are you sure? [Delete] [Cancel]".
+    // Let's implement a toast-based confirmation.
+    
+    toast("Are you sure you want to delete this report?", {
+      action: {
+        label: "Delete",
+        onClick: async () => {
+             const promise = documentsAPI.delete(id)
+             
+             toast.promise(promise, {
+               loading: 'Deleting report...',
+               success: () => {
+                 setReports(prev => prev.filter(report => report.id !== id))
+                 return 'Report deleted successfully'
+               },
+               error: 'Failed to delete report',
+             })
+        },
+      },
+      cancel: {
+        label: "Cancel",
+        onClick: () => console.log("Cancelled"),
+      }
+    })
   }
 
   return (
