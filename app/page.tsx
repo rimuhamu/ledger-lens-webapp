@@ -67,26 +67,8 @@ export default function DashboardPage() {
               Welcome back, {user?.email?.split('@')[0] || 'User'}
             </h1>
             <p className="text-muted-foreground mt-1">
-              {"Here's the latest intelligence from your analyzed portfolios."}
+              {"Here's the overview of your analyzed portfolios."}
             </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search tickers..."
-                className="pl-9 w-48 lg:w-64 bg-card border-border text-foreground placeholder:text-muted-foreground"
-              />
-            </div>
-            <Button
-              asChild
-              className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
-            >
-              <Link href="/analysis">
-                <Upload className="w-4 h-4" />
-                <span className="hidden sm:inline">Quick Upload</span>
-              </Link>
-            </Button>
           </div>
         </div>
 
