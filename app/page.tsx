@@ -14,8 +14,8 @@ import {
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/hooks/use-auth"
-import { documentsAPI } from "@/lib/api"
-import type { DocumentResponse } from "@/lib/api/types"
+import { documentsAPI, dashboardAPI } from "@/lib/api"
+import type { DocumentResponse, DashboardStats } from "@/lib/api/types"
 
 const feedItems = [
   {
@@ -29,24 +29,41 @@ const feedItems = [
 export default function DashboardPage() {
   const { user } = useAuth()
   const [documents, setDocuments] = useState<DocumentResponse[]>([])
+  const [stats, setStats] = useState<DashboardStats | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const fetchDocuments = async () => {
+    const fetchData = async () => {
       try {
-        const docs = await documentsAPI.list()
+        const [docs, dashboardStats] = await Promise.all([
+            documentsAPI.list(),
+            dashboardAPI.getStats()
+        ])
         setDocuments(docs)
+        setStats(dashboardStats)
       } catch (error) {
-        console.error("Failed to fetch documents:", error)
+        console.error("Failed to fetch dashboard data:", error)
       } finally {
         setIsLoading(false)
       }
     }
 
     if (user) {
-        fetchDocuments()
+        fetchData()
     }
   }, [user])
+
+  const getLastAnalysisText = (dateStr: string | null) => {
+    if (!dateStr) return "N/A"
+    const date = new Date(dateStr)
+    const now = new Date()
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+    
+    if (diffInSeconds < 60) return "Just now"
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`
+    return date.toLocaleDateString()
+  }
 
   return (
     <AppShell>
@@ -83,19 +100,19 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
           <StatCard
             title="Total Reports"
-            value={documents.length.toString()}
+            value={stats?.total_reports.toString() || "0"}
             icon={FileText}
             badge={{ text: "Active", variant: "success" }}
           />
           <StatCard
             title="Last Analysis"
-            value="Just now"
+            value={getLastAnalysisText(stats?.last_analysis || null)}
             icon={Clock}
             badge={{ text: "Real-time" }}
           />
           <StatCard
             title="AI Accuracy Score"
-            value="98.4%"
+            value={`${stats?.ai_accuracy_score.toFixed(1) || 0}%`}
             icon={Sparkles}
             badge={{ text: "Optimal", variant: "success" }}
           />
@@ -136,7 +153,7 @@ export default function DashboardPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <IntelligenceFeed items={feedItems} />
-          <PortfolioSentimentMap />
+          <PortfolioSentimentMap sentimentDistribution={stats?.sentiment_distribution} />
         </div>
       </div>
     </AppShell>

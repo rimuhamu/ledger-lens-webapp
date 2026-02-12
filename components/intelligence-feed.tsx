@@ -51,33 +51,47 @@ export function IntelligenceFeed({ items }: IntelligenceFeedProps) {
   )
 }
 
-export function PortfolioSentimentMap() {
+interface PortfolioSentimentMapProps {
+  sentimentDistribution?: Record<string, number>
+}
+
+export function PortfolioSentimentMap({ sentimentDistribution }: PortfolioSentimentMapProps) {
+  const total = Object.values(sentimentDistribution || {}).reduce((a, b) => a + b, 0) || 1
+  
+  const bullish = sentimentDistribution?.['bullish'] || 0
+  const bearish = sentimentDistribution?.['bearish'] || 0
+  const neutral = sentimentDistribution?.['neutral'] || 0
+  
+  const bullishPct = Math.round((bullish / total) * 100)
+  const bearishPct = Math.round((bearish / total) * 100)
+  const neutralPct = Math.round((neutral / total) * 100)
+
   return (
     <div className="rounded-xl border border-border bg-card p-6">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-foreground">
           Portfolio Sentiment Map
         </h3>
-        <span className="text-xs text-muted-foreground">Updated hourly</span>
+        <span className="text-xs text-muted-foreground">Real-time</span>
       </div>
 
       <div className="flex items-center justify-center gap-8 py-8">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-emerald-400" />
-          <span className="text-xs text-muted-foreground">72% Bullish</span>
+          <span className="text-xs text-muted-foreground">{bullishPct}% Bullish</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-red-400" />
-          <span className="text-xs text-muted-foreground">18% Bearish</span>
+          <span className="text-xs text-muted-foreground">{bearishPct}% Bearish</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-slate-400" />
-          <span className="text-xs text-muted-foreground">10% Neutral</span>
+          <span className="text-xs text-muted-foreground">{neutralPct}% Neutral</span>
         </div>
       </div>
 
       <p className="text-sm text-muted-foreground italic text-center">
-        Financial data visualization active
+        Based on {Object.values(sentimentDistribution || {}).reduce((a, b) => a + b, 0)} analyzed documents
       </p>
     </div>
   )
