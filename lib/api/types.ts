@@ -87,6 +87,22 @@ export interface ConfidenceData {
   metrics: ConfidenceMetric[]
 }
 
+// Gap Analysis Types
+export interface TokenConfidence {
+  token: string
+  logprob: number
+  probability: number  // For heatmap visualization (0-1)
+}
+
+export interface GroundednessMetrics {
+  retrieval_avg: number      // R: Average retrieval score (0-1)
+  generation_avg: number     // G: Generation confidence (0-1)
+  gap: number                // G - R
+  status: 'PASS' | 'WARNING' | 'INCOMPLETE'
+  status_reason: string
+  hallucination_risk: boolean
+}
+
 export interface AnalysisResponse {
   answer: string
   verification_status: 'PASS' | 'FAIL'
@@ -95,6 +111,8 @@ export interface AnalysisResponse {
   retrieval_scores?: number[]
   retrieved_sources?: string[]
   generation_logprobs?: number[]
+  token_confidences?: TokenConfidence[]  // Token-level data for heatmap
+  groundedness?: GroundednessMetrics     // Calculated on frontend
   metadata: {
     document_id: string
   }

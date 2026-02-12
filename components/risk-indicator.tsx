@@ -1,5 +1,7 @@
-import { Shield, AlertTriangle, ShieldAlert } from "lucide-react"
+import { Shield, AlertTriangle, ShieldAlert, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
+import type { GroundednessMetrics } from "@/lib/api/types"
 
 type RiskLevel = "low" | "moderate" | "high"
 
@@ -13,7 +15,9 @@ interface RiskIndicatorProps {
   level: RiskLevel
   description: string
   metrics?: RiskMetric[]
+  groundednessData?: GroundednessMetrics  // New: Gap analysis data
 }
+
 
 const riskConfig = {
   low: {
@@ -45,7 +49,7 @@ const riskConfig = {
   },
 }
 
-export function RiskIndicator({ level, description, metrics }: RiskIndicatorProps) {
+export function RiskIndicator({ level, description, metrics, groundednessData }: RiskIndicatorProps) {
   const config = riskConfig[level]
   const Icon = config.icon
 
@@ -54,6 +58,25 @@ export function RiskIndicator({ level, description, metrics }: RiskIndicatorProp
     if (ratio >= 0.8) return "bg-red-400"     // High
     if (ratio >= 0.4) return "bg-amber-400"   // Moderate
     return "bg-emerald-400"                  // Low
+  }
+
+  // Groundedness status colors
+  const groundednessStatusConfig = {
+    PASS: {
+      bg: "bg-emerald-900/30",
+      border: "border-emerald-800/50",
+      text: "text-emerald-400"
+    },
+    WARNING: {
+      bg: "bg-amber-900/30",
+      border: "border-amber-800/50",
+      text: "text-amber-400"
+    },
+    INCOMPLETE: {
+      bg: "bg-slate-900/30",
+      border: "border-slate-800/50",
+      text: "text-slate-400"
+    }
   }
 
   return (
@@ -74,6 +97,102 @@ export function RiskIndicator({ level, description, metrics }: RiskIndicatorProp
           <p className="text-xs text-muted-foreground">{description}</p>
         </div>
       </div>
+
+      {/* Hallucination Warning Badge */}
+      {groundednessData?.hallucination_risk && (
+        <div className="flex items-start gap-2 p-3 rounded-lg border border-amber-800/50 bg-amber-900/20">
+          <AlertCircle className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-xs font-semibold text-amber-400">Hallucination Risk Detected</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              AI confidence ({(groundednessData.generation_avg * 100).toFixed(0)}%) 
+              exceeds document evidence ({(groundednessData.retrieval_avg * 100).toFixed(0)}%) 
+              by {(groundednessData.gap * 100).toFixed(0)}%
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Groundedness Metrics */}
+      {groundednessData && (
+        <div className={cn(
+          "p-3 rounded-lg border",
+          groundednessStatusConfig[groundednessData.status].bg,
+          groundednessStatusConfig[groundednessData.status].border
+        )}>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-semibold text-foreground">Groundedness</span>
+            <Badge 
+              variant="outline" 
+              className={cn(
+                "text-[10px]",
+                groundednessStatusConfig[groundednessData.status].text,
+                groundednessStatusConfig[groundednessData.status].border
+              )}
+            >
+              {groundednessData.status}
+            </Badge>
+          </div>
+          <p className="text-[11px] text-muted-foreground mb-3">
+            {groundednessData.status_reason}
+          </p>
+          
+          {/* R and G metrics */}
+          <div className="space-y-2.5">
+            <div>
+              <div className="flex justify-between text-xs mb-1">
+                <span className="text-muted-foreground">Retrieval Quality (R)</span>
+                <span className="font-mono font-medium text-foreground">
+                  {(groundednessData.retrieval_avg * 100).toFixed(0)}%
+                </span>
+              </div>
+              <div className="h-1.5 w-full rounded-full bg-secondary">
+                <div
+                  className="h-full rounded-full bg-primary/70 transition-all duration-700"
+                  style={{ width: `${groundednessData.retrieval_avg * 100}%` }}
+                />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between text-xs mb-1">
+                <span className="text-muted-foreground">AI Certainty (G)</span>
+                <span className="font-mono font-medium text-foreground">
+                  {(groundednessData.generation_avg * 100).toFixed(0)}%
+                </span>
+              </div>
+              <div className="h-1.5 w-full rounded-full bg-secondary">
+                <div
+                  className="h-full rounded-full bg-primary/70 transition-all duration-700"
+                  style={{ width: `${groundednessData.generation_avg * 100}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Gap indicator */}
+            <div>
+              <div className="flex justify-between text-xs mb-1">
+                <span className="text-muted-foreground">Confidence Gap</span>
+                <span className={cn(
+                  "font-mono font-medium",
+                  groundednessData.gap > 0.15 ? "text-amber-400" : "text-emerald-400"
+                )}>
+                  {groundednessData.gap > 0 ? '+' : ''}{(groundednessData.gap * 100).toFixed(0)}%
+                </span>
+              </div>
+              <div className="h-1.5 w-full rounded-full bg-secondary">
+                <div
+                  className={cn(
+                    "h-full rounded-full transition-all duration-700",
+                    groundednessData.gap > 0.15 ? "bg-amber-400" : "bg-emerald-400"
+                  )}
+                  style={{ width: `${Math.abs(groundednessData.gap) * 100}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Individual Metrics */}
       {metrics && metrics.length > 0 && (

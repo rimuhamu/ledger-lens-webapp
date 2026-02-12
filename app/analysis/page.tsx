@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, Suspense } from "react"
+import { useState, useEffect, Suspense, useMemo } from "react"
 import { useSearchParams } from "next/navigation"
 import { AppShell } from "@/components/app-shell"
 import { FileUploadZone } from "@/components/file-upload-zone"
@@ -8,13 +8,15 @@ import { AnalysisSkeleton } from "@/components/analysis-skeleton"
 import { SentimentScore } from "@/components/sentiment-score"
 import { RiskIndicator } from "@/components/risk-indicator"
 import { KeyHighlights } from "@/components/key-highlights"
-import { Sparkles } from "lucide-react"
+import { RetrievalScatterPlot } from "@/components/retrieval-scatter-plot"
+import { Sparkles, TrendingUp } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { documentsAPI, analysisAPI } from "@/lib/api"
 import { toast } from "sonner"
 import type { AnalysisResponse } from "@/lib/api/types"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
+import { calculateGroundedness } from "@/lib/utils/groundedness"
 
 function AnalysisContent() {
   const searchParams = useSearchParams()
@@ -81,6 +83,27 @@ function AnalysisContent() {
   }
 
   const { intelligence_hub } = analysisResult || {}
+
+  // Calculate groundedness metrics
+  const groundednessMetrics = useMemo(() => {
+    if (!analysisResult?.retrieval_scores || !analysisResult?.generation_logprobs) {
+      return null
+    }
+    
+    const result = calculateGroundedness(
+      analysisResult.retrieval_scores,
+      analysisResult.generation_logprobs
+    )
+
+    return {
+      retrieval_avg: result.R,
+      generation_avg: result.G,
+      gap: result.gap,
+      status: result.status,
+      status_reason: result.statusReason,
+      hallucination_risk: result.isHallucinationRisk
+    }
+  }, [analysisResult])
 
   return (
     <AppShell>
@@ -162,9 +185,23 @@ function AnalysisContent() {
                         value: r.severity,
                         ratio: r.severity === 'HIGH' ? 0.9 : r.severity === 'MED' ? 0.5 : 0.2
                     }))}
+                    groundednessData={groundednessMetrics || undefined}
                   />
                 )}
               </div>
+
+              {/* Retrieval Score Distribution */}
+              {!isProcessing && analysisResult?.retrieval_scores && analysisResult.retrieval_scores.length > 0 && (
+                <div className="rounded-xl border border-border bg-card p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Source Quality Analysis
+                    </h3>
+                    <TrendingUp className="w-4 h-4 text-primary" />
+                  </div>
+                  <RetrievalScatterPlot retrievalScores={analysisResult.retrieval_scores} />
+                </div>
+              )}
 
               {/* AI Confidence & Benchmarking */}
               <div className="rounded-xl border border-border bg-card p-6">
