@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Trash2, Loader2 } from "lucide-react"
+import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { AnalysisCard } from "@/components/analysis-card"
 import { analysisAPI } from "@/lib/api"
@@ -12,7 +12,6 @@ interface ConnectedAnalysisCardProps {
   ticker: string
   filename: string
   createdAt: string
-  onDelete?: (id: string) => void
 }
 
 export function ConnectedAnalysisCard({
@@ -20,11 +19,9 @@ export function ConnectedAnalysisCard({
   ticker,
   filename,
   createdAt,
-  onDelete,
 }: ConnectedAnalysisCardProps) {
   const [analysis, setAnalysis] = useState<AnalysisResponse | null>(null)
   const [loading, setLoading] = useState(true)
-  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
     const fetchAnalysis = async () => {
@@ -42,25 +39,6 @@ export function ConnectedAnalysisCard({
 
     fetchAnalysis()
   }, [documentId])
-
-  const handleDelete = async (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    
-    if (!confirm("Are you sure you want to delete this report? This action cannot be undone.")) {
-        return
-    }
-
-    setIsDeleting(true)
-    try {
-        if (onDelete) {
-            await onDelete(documentId)
-        }
-    } catch (error) {
-        console.error("Failed to delete document:", error)
-        setIsDeleting(false)
-    }
-  }
 
   if (loading) {
     return (
@@ -103,7 +81,7 @@ export function ConnectedAnalysisCard({
   
   return (
     <div className="relative group">
-       <AnalysisCard
+      <AnalysisCard
         ticker={ticker}
         company={filename}
         reportType={reportType}
@@ -116,17 +94,6 @@ export function ConnectedAnalysisCard({
         href={analysis ? `/analysis?id=${documentId}` : "#"}
       />
       
-      {/* Delete Button */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute top-2 right-2 z-20 text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
-        onClick={handleDelete}
-        disabled={isDeleting}
-      >
-        {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-      </Button>
-
       {!analysis && !loading && (
         <button
             onClick={handleAnalyze}

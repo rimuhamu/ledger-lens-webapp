@@ -47,17 +47,6 @@ export default function DashboardPage() {
 
 
 
-  const handleDelete = async (id: string) => {
-    try {
-        await documentsAPI.delete(id)
-        setDocuments(prev => prev.filter(doc => doc.document_id !== id))
-        // Refresh stats ideally, but for now we just remove from list
-    } catch (error) {
-        console.error("Failed to delete document:", error)
-        alert("Failed to delete document. Please try again.")
-    }
-  }
-
   return (
     <AppShell>
       <div className="p-6 lg:p-8 max-w-7xl mx-auto">
@@ -114,7 +103,6 @@ export default function DashboardPage() {
                     ticker={doc.ticker}
                     filename={doc.filename}
                     createdAt={doc.created_at}
-                    onDelete={handleDelete}
                 />
                 ))}
                 <NewAnalysisCard />

@@ -12,6 +12,7 @@ import {
   TrendingDown,
   Minus,
   Loader2,
+  Trash2,
 } from "lucide-react"
 import { AppShell } from "@/components/app-shell"
 import { Input } from "@/components/ui/input"
@@ -134,6 +135,23 @@ export default function ReportsPage() {
       r.company.toLowerCase().includes(search.toLowerCase())
   )
 
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    if (!confirm("Are you sure you want to delete this report? This action cannot be undone.")) {
+      return
+    }
+
+    try {
+      await documentsAPI.delete(id)
+      setReports(prev => prev.filter(report => report.id !== id))
+    } catch (error) {
+      console.error("Failed to delete report:", error)
+      alert("Failed to delete report. Please try again.")
+    }
+  }
+
   return (
     <AppShell>
       <div className="p-6 lg:p-8 max-w-7xl mx-auto">
@@ -200,7 +218,7 @@ export default function ReportsPage() {
                     key={report.id}
                     href={report.isLoading ? "#" : `/analysis?id=${report.slug}`}
                     className={cn(
-                        "grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 px-6 py-4 border-b border-border last:border-0 hover:bg-secondary/30 transition-colors group",
+                        "grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 px-6 py-4 border-b border-border last:border-0 hover:bg-secondary/30 transition-colors group relative",
                         report.isLoading && "opacity-60 pointer-events-none"
                     )}
                   >
@@ -269,7 +287,7 @@ export default function ReportsPage() {
                             </>
                         )}
                     </div>
-                    <div className="md:col-span-1 flex items-center">
+                    <div className="md:col-span-1 flex items-center justify-between">
                         {report.isLoading ? (
                             <span className="text-xs text-muted-foreground">...</span>
                         ) : (
@@ -277,6 +295,14 @@ export default function ReportsPage() {
                                 {report.confidence.toFixed(1)}%
                             </span>
                         )}
+                         <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity absolute right-4 md:static"
+                            onClick={(e) => handleDelete(e, report.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                     </div>
                   </Link>
                 )
