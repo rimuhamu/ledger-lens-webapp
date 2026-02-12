@@ -19,7 +19,7 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "LedgerLens - AI-Powered Financial Intelligence",
   description:
-    "Analyze annual reports with AI-powered financial intelligence. Get sentiment scores, risk assessments, and actionable insights from 10-K filings.",
+    "Analyze annual reports with AI-powered financial intelligence. Get sentiment scores, risk assessments, and actionable insights from Annual Reports and 10-K filings.",
 }
 
 export const viewport: Viewport = {

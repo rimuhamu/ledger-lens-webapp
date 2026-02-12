@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Rounded Square Background -->
+  <rect x="0" y="0" width="512" height="512" rx="120" ry="120" fill="#2563EB"/>
+  
+  <!-- Bank Icon (White) -->
+  <g fill="white">
+    <!-- Roof -->
+    <path d="M256 80L60 180H452L256 80Z"/>
+    
+    <!-- Top Lintel -->
+    <rect x="60" y="190" width="392" height="40"/>
+    
+    <!-- Base -->
+    <rect x="40" y="400" width="432" height="40"/>
+    <rect x="20" y="440" width="472" height="20"/>
+    
+    <!-- Columns -->
+    <rect x="80" y="240" width="50" height="150"/>
+    <rect x="180" y="240" width="50" height="150"/>
+    <rect x="282" y="240" width="50" height="150"/>
+    <rect x="382" y="240" width="50" height="150"/>
+  </g>
+</svg>
