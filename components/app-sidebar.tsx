@@ -57,24 +57,6 @@ export function AppSidebar() {
           })}
         </ul>
       </nav>
-
-      <div className="px-4 py-4 border-t border-border">
-        <div className="flex items-center gap-3 px-4 py-2">
-          <Avatar className="w-8 h-8">
-            <AvatarFallback className="bg-primary/20 text-primary text-xs">
-              AC
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col">
-            <span className="text-sm font-medium text-foreground">
-              Alex Chen
-            </span>
-            <span className="text-xs text-muted-foreground">
-              Senior Analyst
-            </span>
-          </div>
-        </div>
-      </div>
     </aside>
   )
 }
