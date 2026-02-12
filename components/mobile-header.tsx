@@ -20,7 +20,6 @@ const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/analysis", label: "Upload & Analyze", icon: Upload },
   { href: "/reports", label: "Reports", icon: FileText },
-  { href: "/saved", label: "Saved Analyses", icon: Bookmark },
   { href: "/settings", label: "Settings", icon: Settings },
 ]
 
