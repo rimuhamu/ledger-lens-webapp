@@ -13,7 +13,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/hooks/use-auth"
-import { documentsAPI, dashboardAPI } from "@/lib/api"
+import { documentsAPI, dashboardAPI, analysisAPI } from "@/lib/api"
 import type { DocumentResponse, DashboardStats } from "@/lib/api/types"
 
 
@@ -32,7 +32,42 @@ export default function DashboardPage() {
             dashboardAPI.getStats()
         ])
         setDocuments(docs)
-        setStats(dashboardStats)
+        
+        // Calculate AI Accuracy Score from AI Certainty average
+        let aiAccuracyScore = 0
+        if (docs.length > 0) {
+          const certainties: number[] = []
+          
+          // Fetch analysis for each document to get AI Certainty
+          await Promise.all(
+            docs.map(async (doc) => {
+              try {
+                const analysis = await analysisAPI.getAnalysis(doc.document_id)
+                if (analysis?.confidence_metrics?.metrics) {
+                  const aiCertainty = analysis.confidence_metrics.metrics.find(
+                    m => m.label === "AI Certainty"
+                  )
+                  if (aiCertainty) {
+                    certainties.push(aiCertainty.ratio * 100)
+                  }
+                }
+              } catch (error) {
+                console.error(`Failed to fetch analysis for ${doc.document_id}`, error)
+              }
+            })
+          )
+          
+          // Calculate average
+          if (certainties.length > 0) {
+            aiAccuracyScore = certainties.reduce((sum, val) => sum + val, 0) / certainties.length
+          }
+        }
+        
+        // Update stats with calculated AI accuracy
+        setStats({
+          ...dashboardStats,
+          ai_accuracy_score: aiAccuracyScore
+        })
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error)
       } finally {
@@ -71,9 +106,14 @@ export default function DashboardPage() {
           <PortfolioSentimentMap sentimentDistribution={stats?.sentiment_distribution} />
           <StatCard
             title="AI Accuracy Score"
-            value={`${stats?.ai_accuracy_score.toFixed(1) || 0}%`}
+            value={`${(stats?.ai_accuracy_score || 0).toFixed(1)}%`}
             icon={Sparkles}
-            badge={{ text: "Optimal", variant: "success" }}
+            badge={(() => {
+              const score = stats?.ai_accuracy_score || 0
+              if (score >= 80) return { text: "Optimal", variant: "success" as const }
+              if (score >= 60) return { text: "Good", variant: "default" as const }
+              return { text: "Needs Improvement", variant: "destructive" as const }
+            })()}
           />
         </div>
 

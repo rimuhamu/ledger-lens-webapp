@@ -8,7 +8,7 @@ interface StatCardProps {
   icon: LucideIcon
   badge?: {
     text: string
-    variant?: "default" | "success" | "warning"
+    variant?: "default" | "success" | "warning" | "destructive"
   }
 }
 
@@ -16,6 +16,7 @@ const badgeColors = {
   default: "bg-primary/10 text-primary border-primary/20 hover:bg-primary/10",
   success: "bg-emerald-900/30 text-emerald-400 border-emerald-800/50 hover:bg-emerald-900/30",
   warning: "bg-amber-900/30 text-amber-400 border-amber-800/50 hover:bg-amber-900/30",
+  destructive: "bg-red-900/30 text-red-400 border-red-800/50 hover:bg-red-900/30",
 }
 
 export function StatCard({ title, value, icon: Icon, badge }: StatCardProps) {
