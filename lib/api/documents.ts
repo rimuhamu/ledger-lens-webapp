@@ -42,4 +42,11 @@ export const documentsAPI = {
     )
     return response.data
   },
+
+  /**
+   * Delete a document and its data
+   */
+  async delete(documentId: string): Promise<void> {
+    await apiClient.delete(`/documents/${documentId}`)
+  },
 }
