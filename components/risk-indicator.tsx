@@ -49,6 +49,13 @@ export function RiskIndicator({ level, description, metrics }: RiskIndicatorProp
   const config = riskConfig[level]
   const Icon = config.icon
 
+  // Helper to determine bar color based on individual metric ratio
+  const getBarColor = (ratio: number) => {
+    if (ratio >= 0.8) return "bg-red-400"     // High
+    if (ratio >= 0.4) return "bg-amber-400"   // Moderate
+    return "bg-emerald-400"                  // Low
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <div
@@ -59,12 +66,7 @@ export function RiskIndicator({ level, description, metrics }: RiskIndicatorProp
           config.border
         )}
       >
-        <div
-          className={cn(
-            "flex items-center justify-center w-10 h-10 rounded-full",
-            config.iconBg
-          )}
-        >
+        <div>
           <Icon className={cn("w-5 h-5", config.text)} />
         </div>
         <div>
@@ -73,29 +75,32 @@ export function RiskIndicator({ level, description, metrics }: RiskIndicatorProp
         </div>
       </div>
 
+      {/* Individual Metrics */}
       {metrics && metrics.length > 0 && (
         <div className="flex flex-col gap-3">
-          {metrics.map((metric) => (
-            <div key={metric.label}>
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs text-muted-foreground">
-                  {metric.label}
-                </span>
-                <span className="text-sm font-mono font-medium text-foreground">
-                  {metric.value}
-                </span>
+          {metrics.map((metric) => {
+            // Calculate width and color per metric
+            const isHigh = metric.ratio >= 0.8;
+            const barWidth = isHigh ? "100%" : `${Math.min(metric.ratio * 100, 100)}%`;
+            const barColor = getBarColor(metric.ratio);
+
+            return (
+              <div key={metric.label}>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs text-muted-foreground">{metric.label}</span>
+                  <span className="text-sm font-mono font-medium text-foreground">
+                    {metric.value}
+                  </span>
+                </div>
+                <div className="h-1.5 w-full rounded-full bg-secondary">
+                  <div
+                    className={cn("h-full rounded-full transition-all duration-700 ease-out", barColor)}
+                    style={{ width: barWidth }}
+                  />
+                </div>
               </div>
-              <div className="h-1.5 w-full rounded-full bg-secondary">
-                <div
-                  className={cn(
-                    "h-full rounded-full transition-all duration-700 ease-out",
-                    config.bar
-                  )}
-                  style={{ width: `${Math.min(metric.ratio * 100, 100)}%` }}
-                />
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

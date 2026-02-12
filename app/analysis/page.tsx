@@ -31,6 +31,7 @@ export default function AnalysisPage() {
           const analysis = await analysisAPI.getAnalysis(documentId)
           if (analysis && analysis.intelligence_hub) {
             setAnalysisResult(analysis)
+            console.log(JSON.stringify(analysis, null, 2))
           } else {
             toast.info("Analysis not yet available for this document.")
           }
