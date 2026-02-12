@@ -211,7 +211,7 @@ function AnalysisResults({ result }: { result: AnalysisResponse }) {
           <span className="uppercase tracking-wider font-semibold block text-[10px] mb-0.5">
             Analysis Date
           </span>
-          <span className="text-foreground text-sm">{new Date().toLocaleDateString()}</span>
+          <span className="text-foreground text-sm">{new Date().toLocaleDateString('en-GB')}</span>
         </div>
       </div>
     </div>

@@ -93,7 +93,10 @@ export function ConnectedAnalysisCard({
         reportType={reportType}
         sentimentScore={sentimentScore}
         sentiment={sentiment}
-        date={new Date(createdAt).toLocaleDateString()}
+        date={(() => {
+          const date = new Date(createdAt)
+          return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
+        })()}
         href={analysis ? `/analysis?id=${documentId}` : "#"}
       />
       {!analysis && !loading && (
