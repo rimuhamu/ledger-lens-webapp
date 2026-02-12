@@ -103,7 +103,7 @@ export function AnalysisCard({
 export function NewAnalysisCard() {
   return (
     <Link
-      href="/analysis"
+      href="/upload"
       className="group flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border bg-card/50 p-8 transition-all hover:border-primary/40 hover:bg-card"
     >
       <div className="flex items-center justify-center w-14 h-14 rounded-xl border border-border bg-surface group-hover:bg-primary/10 transition-colors">

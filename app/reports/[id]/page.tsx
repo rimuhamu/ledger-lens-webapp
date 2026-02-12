@@ -1,9 +1,8 @@
 "use client"
 
-import { useState, useEffect, Suspense, useMemo } from "react"
-import { useSearchParams } from "next/navigation"
+import React, { useState, useEffect, useMemo } from "react"
+import { useRouter } from "next/navigation"
 import { AppShell } from "@/components/app-shell"
-import { FileUploadZone } from "@/components/file-upload-zone"
 import { AnalysisSkeleton } from "@/components/analysis-skeleton"
 import { SentimentScore } from "@/components/sentiment-score"
 import { RiskIndicator } from "@/components/risk-indicator"
@@ -11,76 +10,52 @@ import { KeyHighlights } from "@/components/key-highlights"
 import { RetrievalScatterPlot } from "@/components/retrieval-scatter-plot"
 import { Sparkles, TrendingUp } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { documentsAPI, analysisAPI } from "@/lib/api"
+import { analysisAPI } from "@/lib/api"
 import { toast } from "sonner"
 import type { AnalysisResponse } from "@/lib/api/types"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { calculateGroundedness } from "@/lib/utils/groundedness"
 
-function AnalysisContent() {
-  const searchParams = useSearchParams()
-  const documentId = searchParams.get('id')
+interface ReportAnalysisPageProps {
+  params: Promise<{
+    id: string
+  }>
+}
+
+export default function ReportAnalysisPage({ params }: ReportAnalysisPageProps) {
+  const { id: documentId } = React.use(params)
   const [isProcessing, setIsProcessing] = useState(false)
   const [analysisResult, setAnalysisResult] = useState<AnalysisResponse | null>(null)
 
-  // Load existing analysis if document ID is provided
+  // Load existing analysis
   useEffect(() => {
+    if (!documentId) return
+
     const loadAnalysis = async () => {
-      if (documentId) {
-        setIsProcessing(true)
-        try {
-          const analysis = await analysisAPI.getAnalysis(documentId)
-          if (analysis && analysis.intelligence_hub) {
-            setAnalysisResult(analysis)
-            console.log(JSON.stringify(analysis, null, 2))
-          } else {
-            toast.info("Analysis not yet available for this document.")
+      setIsProcessing(true)
+      try {
+        const analysis = await analysisAPI.getAnalysis(documentId)
+        
+        if (analysis) {
+          setAnalysisResult(analysis)
+          
+          if (!analysis.intelligence_hub) {
+            toast.info("Analysis is processing. Some sections may be incomplete.")
           }
-        } catch (error: any) {
-          console.error("Failed to load analysis:", error)
-          toast.error("Failed to load analysis. The document may not have been analyzed yet.")
-        } finally {
-          setIsProcessing(false)
+        } else {
+          toast.error("No analysis data found for this document.")
         }
+      } catch (error: any) {
+        console.error("Failed to load analysis:", error)
+        toast.error("Failed to load analysis. The document may not have been analyzed yet.")
+      } finally {
+        setIsProcessing(false)
       }
     }
 
     loadAnalysis()
   }, [documentId])
-
-  const handleAnalyze = async (file: File | null, ticker: string) => {
-    if (!file) {
-      toast.error("Please upload a PDF file.")
-      return
-    }
-    if (!ticker) {
-      toast.error("Please enter a ticker symbol.")
-      return
-    }
-
-    setIsProcessing(true)
-    setAnalysisResult(null)
-
-    try {
-      toast.info("Uploading document...")
-      const uploadResult = await documentsAPI.upload(file, ticker)
-      
-      toast.info("Analyzing document... This may take a minute.")
-      const analysis = await analysisAPI.analyze(
-        uploadResult.document_id,
-        "Provide a comprehensive financial analysis of this document."
-      )
-      
-      setAnalysisResult(analysis)
-      toast.success("Analysis complete!")
-    } catch (error: any) {
-      console.error("Analysis failed:", error)
-      toast.error(error.response?.data?.detail || "Analysis failed. Please try again.")
-    } finally {
-      setIsProcessing(false)
-    }
-  }
 
   const { intelligence_hub } = analysisResult || {}
 
@@ -108,9 +83,7 @@ function AnalysisContent() {
   return (
     <AppShell>
       <div className="p-6 lg:p-8 max-w-7xl mx-auto">
-        {/* Only show upload zone if not viewing an existing analysis */}
-        {!documentId && <FileUploadZone onAnalyze={handleAnalyze} isProcessing={isProcessing} />}
-
+        {/* Main Content Area */}
         {(isProcessing || analysisResult) && (
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mt-8">
             {/* Left Column - Analysis Results (60%) */}
@@ -266,31 +239,16 @@ function AnalysisContent() {
             <div className="w-16 h-16 rounded-2xl bg-card border border-border flex items-center justify-center mb-4">
               <Sparkles className="w-7 h-7 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold text-foreground">
-              No Reports Analyzed Yet
+            <h3 className="text-lg font-semibold text-foreground mb-2">
+              No Analysis Available
             </h3>
-            <p className="text-sm text-muted-foreground mt-1 max-w-md">
-              Upload a PDF annual report to get started with AI-powered
-              financial analysis.
+            <p className="text-sm text-muted-foreground">
+              This document hasn't been analyzed yet or the analysis data is unavailable.
             </p>
           </div>
         )}
       </div>
     </AppShell>
-  )
-}
-
-export default function AnalysisPage() {
-  return (
-    <Suspense fallback={
-      <AppShell>
-        <div className="p-6 lg:p-8 max-w-7xl mx-auto">
-          <AnalysisSkeleton />
-        </div>
-      </AppShell>
-    }>
-      <AnalysisContent />
-    </Suspense>
   )
 }
 
@@ -316,12 +274,12 @@ function AnalysisResults({ result }: { result: AnalysisResponse }) {
           Executive Summary
         </h4>
         <div className="text-sm text-muted-foreground leading-relaxed mb-4 prose prose-invert max-w-none prose-p:leading-relaxed prose-headings:text-foreground prose-a:text-primary hover:prose-a:underline prose-strong:text-foreground prose-ul:my-4 prose-li:my-1">
-  <ReactMarkdown 
-    remarkPlugins={[remarkGfm]}
-  >
-    {result.answer}
-  </ReactMarkdown>
-</div>
+          <ReactMarkdown 
+            remarkPlugins={[remarkGfm]}
+          >
+            {result.answer}
+          </ReactMarkdown>
+        </div>
         
         {/* Suggested Questions */}
         {result.intelligence_hub.suggested_questions?.length > 0 && (

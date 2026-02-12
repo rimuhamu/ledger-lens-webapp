@@ -13,7 +13,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/analysis", label: "Upload & Analyze", icon: Upload },
+  { href: "/upload", label: "New Analysis", icon: Upload },
   { href: "/reports", label: "Reports", icon: FileText },
 ]
 

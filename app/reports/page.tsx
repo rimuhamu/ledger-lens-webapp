@@ -241,7 +241,7 @@ export default function ReportsPage() {
                 return (
                   <Link
                     key={report.id}
-                    href={report.isLoading ? "#" : `/analysis?id=${report.slug}`}
+                    href={report.isLoading ? "#" : `/reports/${report.slug}`}
                     className={cn(
                         "grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 px-6 py-4 border-b border-border last:border-0 hover:bg-secondary/30 transition-colors group relative",
                         report.isLoading && "opacity-60 pointer-events-none"

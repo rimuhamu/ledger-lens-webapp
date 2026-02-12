@@ -91,7 +91,7 @@ export function ConnectedAnalysisCard({
           const date = new Date(createdAt)
           return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
         })()}
-        href={analysis ? `/analysis?id=${documentId}` : "#"}
+        href={analysis ? `/reports/${documentId}` : "#"}
       />
       
       {!analysis && !loading && (

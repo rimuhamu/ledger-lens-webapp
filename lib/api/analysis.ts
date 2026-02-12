@@ -33,6 +33,7 @@ export const analysisAPI = {
       )
       return response.data
     } catch (error) {
+      console.error('Failed to fetch analysis:', error)
       // Return null if analysis not found or error
       return null
     }
