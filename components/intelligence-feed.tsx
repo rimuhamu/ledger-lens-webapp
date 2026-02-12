@@ -68,11 +68,10 @@ export function PortfolioSentimentMap({ sentimentDistribution }: PortfolioSentim
 
   return (
     <div className="rounded-xl border border-border bg-card p-6">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-center mb-6">
         <h3 className="text-lg font-semibold text-foreground">
           Portfolio Sentiment Map
         </h3>
-        <span className="text-xs text-muted-foreground">Real-time</span>
       </div>
 
       <div className="flex items-center justify-center gap-8 py-8">
@@ -89,10 +88,6 @@ export function PortfolioSentimentMap({ sentimentDistribution }: PortfolioSentim
           <span className="text-xs text-muted-foreground">{neutralPct}% Neutral</span>
         </div>
       </div>
-
-      <p className="text-sm text-muted-foreground italic text-center">
-        Based on {Object.values(sentimentDistribution || {}).reduce((a, b) => a + b, 0)} analyzed documents
-      </p>
     </div>
   )
 }

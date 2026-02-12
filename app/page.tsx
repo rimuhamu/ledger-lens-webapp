@@ -8,7 +8,6 @@ import { StatCard } from "@/components/stat-card"
 import { AnalysisCard, NewAnalysisCard } from "@/components/analysis-card"
 import { ConnectedAnalysisCard } from "@/components/connected-analysis-card"
 import {
-  IntelligenceFeed,
   PortfolioSentimentMap,
 } from "@/components/intelligence-feed"
 import { Input } from "@/components/ui/input"
@@ -17,14 +16,7 @@ import { useAuth } from "@/hooks/use-auth"
 import { documentsAPI, dashboardAPI } from "@/lib/api"
 import type { DocumentResponse, DashboardStats } from "@/lib/api/types"
 
-const feedItems = [
-  {
-    title: "Start Analyze Reports",
-    description:
-      "Upload your first annual report to get AI-powered insights.",
-    type: "growth" as const,
-  },
-]
+
 
 export default function DashboardPage() {
   const { user } = useAuth()
@@ -53,17 +45,7 @@ export default function DashboardPage() {
     }
   }, [user])
 
-  const getLastAnalysisText = (dateStr: string | null) => {
-    if (!dateStr) return "N/A"
-    const date = new Date(dateStr)
-    const now = new Date()
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
-    
-    if (diffInSeconds < 60) return "Just now"
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`
-    return date.toLocaleDateString()
-  }
+
 
   const handleDelete = async (id: string) => {
     try {
@@ -115,12 +97,7 @@ export default function DashboardPage() {
             icon={FileText}
             badge={{ text: "Active", variant: "success" }}
           />
-          <StatCard
-            title="Last Analysis"
-            value={getLastAnalysisText(stats?.last_analysis || null)}
-            icon={Clock}
-            badge={{ text: "Real-time" }}
-          />
+          <PortfolioSentimentMap sentimentDistribution={stats?.sentiment_distribution} />
           <StatCard
             title="AI Accuracy Score"
             value={`${stats?.ai_accuracy_score.toFixed(1) || 0}%`}
@@ -163,10 +140,7 @@ export default function DashboardPage() {
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <IntelligenceFeed items={feedItems} />
-          <PortfolioSentimentMap sentimentDistribution={stats?.sentiment_distribution} />
-        </div>
+
       </div>
     </AppShell>
   )

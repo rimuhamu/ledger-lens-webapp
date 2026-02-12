@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
 import { AppSidebar } from "@/components/app-sidebar"
 import { MobileHeader } from "@/components/mobile-header"
-import { AppFooter } from "@/components/app-footer"
 import { Loader2 } from "lucide-react"
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -36,7 +35,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="flex-1 flex flex-col min-w-0">
         <MobileHeader />
         <main className="flex-1">{children}</main>
-        <AppFooter />
       </div>
     </div>
   )
