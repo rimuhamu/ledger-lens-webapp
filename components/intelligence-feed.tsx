@@ -74,19 +74,34 @@ export function PortfolioSentimentMap({ sentimentDistribution }: PortfolioSentim
         </h3>
       </div>
 
-      <div className="flex items-center justify-center gap-8 py-8">
+      <div className="flex items-center justify-center gap-8 py-6">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-emerald-400" />
           <span className="text-xs text-muted-foreground">{bullishPct}% Bullish</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-red-400" />
-          <span className="text-xs text-muted-foreground">{bearishPct}% Bearish</span>
-        </div>
-        <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-slate-400" />
           <span className="text-xs text-muted-foreground">{neutralPct}% Neutral</span>
         </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-red-400" />
+          <span className="text-xs text-muted-foreground">{bearishPct}% Bearish</span>
+        </div>
+      </div>
+      
+      <div className="flex h-3 w-full overflow-hidden rounded-full bg-secondary/20">
+        <div 
+          className="h-full bg-emerald-400 transition-all duration-500 ease-in-out" 
+          style={{ width: `${bullishPct}%` }} 
+        />
+        <div 
+          className="h-full bg-slate-400 transition-all duration-500 ease-in-out" 
+          style={{ width: `${neutralPct}%` }} 
+        />
+        <div 
+          className="h-full bg-red-400 transition-all duration-500 ease-in-out" 
+          style={{ width: `${bearishPct}%` }} 
+        />
       </div>
     </div>
   )
