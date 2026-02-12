@@ -6,8 +6,6 @@ import {
   LayoutDashboard,
   Upload,
   FileText,
-  Bookmark,
-  Settings,
   Landmark,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -17,7 +15,6 @@ const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/analysis", label: "Upload & Analyze", icon: Upload },
   { href: "/reports", label: "Reports", icon: FileText },
-  { href: "/settings", label: "Settings", icon: Settings },
 ]
 
 export function AppSidebar() {
