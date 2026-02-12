@@ -90,3 +90,10 @@ export interface APIError {
   detail: string
   status?: number
 }
+
+export interface DashboardStats {
+  total_reports: number
+  last_analysis: string | null
+  ai_accuracy_score: number
+  sentiment_distribution: Record<string, number>
+}
