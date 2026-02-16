@@ -15,7 +15,7 @@ import type { DashboardStats } from './types'
 export const dashboardAPI = {
   async getStats(): Promise<DashboardStats> {
     try {
-        const response = await apiClient.get<DashboardStats>('/dashboard/stats')
+        const response = await apiClient.get<DashboardStats>('/api/dashboard/stats')
         return response.data
     } catch (error) {
         console.error("Failed to fetch dashboard stats", error)

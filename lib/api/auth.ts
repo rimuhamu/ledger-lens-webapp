@@ -12,7 +12,7 @@ export const authAPI = {
    * Backend sets HTTP-only cookie automatically
    */
   async register(data: RegisterRequest): Promise<TokenResponse> {
-    const response = await apiClient.post<TokenResponse>('/auth/register', data)
+    const response = await apiClient.post<TokenResponse>('/api/auth/register', data)
     return response.data
   },
 
@@ -21,7 +21,7 @@ export const authAPI = {
    * Backend sets HTTP-only cookie automatically
    */
   async login(data: LoginRequest): Promise<TokenResponse> {
-    const response = await apiClient.post<TokenResponse>('/auth/login', data)
+    const response = await apiClient.post<TokenResponse>('/api/auth/login', data)
     return response.data
   },
 
@@ -29,7 +29,7 @@ export const authAPI = {
    * Get current user profile
    */
   async getMe(): Promise<UserResponse> {
-    const response = await apiClient.get<UserResponse>('/auth/me')
+    const response = await apiClient.get<UserResponse>('/api/auth/me')
     return response.data
   },
 
@@ -38,7 +38,7 @@ export const authAPI = {
    */
   async logout(): Promise<void> {
     try {
-      await apiClient.post('/auth/logout')
+      await apiClient.post('/api/auth/logout')
     } catch (error) {
       console.error('Logout error:', error)
     }

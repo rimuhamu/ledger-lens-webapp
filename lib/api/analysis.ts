@@ -12,7 +12,7 @@ export const analysisAPI = {
     const data: AnalysisRequest = { query }
 
     const response = await apiClient.post<AnalysisResponse>(
-      `/analysis/${documentId}`,
+      `/api/analysis/${documentId}`,
       data,
       {
         // Longer timeout for analysis which may take time
@@ -29,7 +29,7 @@ export const analysisAPI = {
   async getAnalysis(documentId: string): Promise<AnalysisResponse | null> {
     try {
       const response = await apiClient.get<AnalysisResponse>(
-        `/documents/${documentId}/analysis`
+        `/api/documents/${documentId}/analysis`
       )
       return response.data
     } catch (error) {

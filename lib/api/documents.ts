@@ -11,7 +11,7 @@ export const documentsAPI = {
     formData.append('ticker', ticker)
 
     const response = await apiClient.post<DocumentIngestResponse>(
-      '/documents/upload',
+      '/api/documents/upload',
       formData,
       {
         headers: {
@@ -29,7 +29,7 @@ export const documentsAPI = {
    * List all documents for the current user
    */
   async list(): Promise<DocumentResponse[]> {
-    const response = await apiClient.get<DocumentResponse[]>('/documents/')
+    const response = await apiClient.get<DocumentResponse[]>('/api/documents/')
     return response.data
   },
 
@@ -38,7 +38,7 @@ export const documentsAPI = {
    */
   async get(documentId: string): Promise<DocumentResponse> {
     const response = await apiClient.get<DocumentResponse>(
-      `/documents/${documentId}`
+      `/api/documents/${documentId}`
     )
     return response.data
   },
@@ -47,6 +47,6 @@ export const documentsAPI = {
    * Delete a document and its data
    */
   async delete(documentId: string): Promise<void> {
-    await apiClient.delete(`/documents/${documentId}`)
+    await apiClient.delete(`/api/documents/${documentId}`)
   },
 }
