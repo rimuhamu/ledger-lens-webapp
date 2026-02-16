@@ -63,7 +63,7 @@ export const serverAnalysisAPI = {
   async getAnalysis(documentId: string): Promise<AnalysisResponse | null> {
     const client = await createServerClient()
     try {
-      const response = await client.get<AnalysisResponse>(`/api/analysis/${documentId}`)
+      const response = await client.get<AnalysisResponse>(`/api/documents/${documentId}/analysis`)
       return response.data
     } catch (error: any) {
       if (error.response?.status === 404) {
@@ -81,7 +81,7 @@ export const serverAnalysisAPI = {
     await Promise.all(
       documentIds.map(async (docId) => {
         try {
-          const response = await client.get<AnalysisResponse>(`/api/analysis/${docId}`)
+          const response = await client.get<AnalysisResponse>(`/api/documents/${docId}/analysis`)
           results.set(docId, response.data)
         } catch (error) {
           // Skip if analysis doesn't exist
