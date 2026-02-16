@@ -130,3 +130,16 @@ export interface DashboardStats {
   ai_accuracy_score: number
   sentiment_distribution: Record<string, number>
 }
+
+// Analysis Progress Types
+export type AnalysisStatusType = 'pending' | 'in_progress' | 'completed' | 'failed'
+export type AnalysisStage = 'uploading' | 'research' | 'analysis' | 'validation' | 'intelligence' | 'complete'
+
+export interface AnalysisStatus {
+  status: AnalysisStatusType
+  current_stage: AnalysisStage
+  stage_index: number
+  total_stages: number
+  message: string
+}
+

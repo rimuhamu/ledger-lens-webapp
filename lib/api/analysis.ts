@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { AnalysisRequest, AnalysisResponse } from './types'
+import type { AnalysisRequest, AnalysisResponse, AnalysisStatus } from './types'
 
 export const analysisAPI = {
   /**
@@ -37,5 +37,15 @@ export const analysisAPI = {
       // Return null if analysis not found or error
       return null
     }
-  }
+  },
+
+  /**
+   * Get the status of an ongoing analysis
+   */
+  async getStatus(documentId: string): Promise<AnalysisStatus> {
+    const response = await apiClient.get<AnalysisStatus>(
+      `/api/analysis/${documentId}/status`
+    )
+    return response.data
+  },
 }
