@@ -12,9 +12,9 @@ interface SentimentScoreProps {
 }
 
 function getScoreColor(score: number) {
-  if (score <= 30) return { stroke: "#EF4444", text: "text-red-400", label: "BEARISH" }
-  if (score <= 55) return { stroke: "#F59E0B", text: "text-amber-400", label: "NEUTRAL" }
-  if (score <= 75) return { stroke: "#3B82F6", text: "text-blue-400", label: "MODERATE" }
+  if (score <= 40) return { stroke: "#EF4444", text: "text-red-400", label: "BEARISH" }
+  if (score <= 60) return { stroke: "#F59E0B", text: "text-amber-400", label: "NEUTRAL" }
+  if (score <= 80) return { stroke: "#3B82F6", text: "text-blue-400", label: "MODERATE" }
   return { stroke: "#10B981", text: "text-emerald-400", label: "BULLISH" }
 }
 
