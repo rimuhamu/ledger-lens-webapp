@@ -55,13 +55,20 @@ function getStageStatus(
 }
 
 export function AnalysisProgress({ status, className }: AnalysisProgressProps) {
+  // Find the index of the current stage in our frontend STAGES array
+  // This is more robust than relying on the backend's index, especially since we added 'uploading'
+  const currentStageName = status?.current_stage
+  const stageIndex = currentStageName 
+    ? STAGES.findIndex(s => s.stage === currentStageName)
+    : -1
+
   // Safe calculation of progress percentage
   // Start at 0% for the first stage (uploading)
-  const totalStages = status?.total_stages || STAGES.length
+  const totalStages = STAGES.length
   const progressPercentage = status 
     ? status.status === 'completed' 
       ? 100 
-      : Math.min(Math.max(Math.round((status.stage_index / totalStages) * 100), 0), 95) // Cap at 95% until complete
+      : Math.min(Math.max(Math.round((stageIndex / totalStages) * 100), 0), 95) // Cap at 95% until complete
     : 0
 
   if (!status) {
@@ -124,7 +131,7 @@ export function AnalysisProgress({ status, className }: AnalysisProgressProps) {
         <div className="absolute left-[11px] top-6 bottom-6 w-0.5 bg-border -z-10" />
         
         {STAGES.map((stage, index) => {
-          const stageStatus = getStageStatus(status.stage_index, index, status.status)
+          const stageStatus = getStageStatus(stageIndex, index, status.status)
           
           return (
             <div
