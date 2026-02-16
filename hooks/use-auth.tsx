@@ -10,7 +10,7 @@ interface AuthContextType {
   loading: boolean
   login: (email: string, password: string) => Promise<void>
   register: (email: string, password: string) => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -20,19 +20,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
-  // Check if user is logged in on mount
+  // Check if user is authenticated via cookie
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const token = localStorage.getItem('ledgerlens_auth_token')
-        if (!token) {
-          setUser(null)
-          return
-        }
-
+        // If the cookie exists and is valid, this will succeed
         const userData = await authAPI.getMe()
         setUser(userData)
       } catch (error) {
+        // No valid session cookie
         setUser(null)
       } finally {
         setLoading(false)
@@ -54,8 +50,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push('/')
   }
 
-  const logout = () => {
-    authAPI.logout()
+  const logout = async () => {
+    await authAPI.logout()
     setUser(null)
     router.push('/login')
   }

@@ -2,7 +2,6 @@ export { authAPI } from './auth'
 export { documentsAPI } from './documents'
 export { analysisAPI } from './analysis'
 export { fetchAnalysesBatch } from './batch'
-export { getAuthToken, setAuthToken, clearAuthToken } from './client'
 
 export type * from './types'
 
