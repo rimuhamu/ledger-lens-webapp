@@ -12,6 +12,8 @@ interface ConnectedAnalysisCardProps {
   ticker: string
   filename: string
   createdAt: string
+  /** Pre-fetched analysis data from parent. When provided, skips the per-card API call. */
+  prefetchedAnalysis?: AnalysisResponse
 }
 
 export function ConnectedAnalysisCard({
@@ -19,11 +21,17 @@ export function ConnectedAnalysisCard({
   ticker,
   filename,
   createdAt,
+  prefetchedAnalysis,
 }: ConnectedAnalysisCardProps) {
-  const [analysis, setAnalysis] = useState<AnalysisResponse | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [analysis, setAnalysis] = useState<AnalysisResponse | null>(
+    prefetchedAnalysis ?? null
+  )
+  const [loading, setLoading] = useState(prefetchedAnalysis === undefined)
 
   useEffect(() => {
+    // Skip fetch if analysis was provided by parent (even if null)
+    if (prefetchedAnalysis !== undefined) return
+
     const fetchAnalysis = async () => {
       try {
         const data = await analysisAPI.getAnalysis(documentId)
@@ -38,7 +46,7 @@ export function ConnectedAnalysisCard({
     }
 
     fetchAnalysis()
-  }, [documentId])
+  }, [documentId, prefetchedAnalysis])
 
   if (loading) {
     return (

@@ -2,85 +2,71 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { FileText, Clock, Sparkles, Search, Upload, Loader2 } from "lucide-react"
+import { FileText, Sparkles, Loader2 } from "lucide-react"
 import { AppShell } from "@/components/app-shell"
 import { StatCard } from "@/components/stat-card"
-import { AnalysisCard, NewAnalysisCard } from "@/components/analysis-card"
+import { NewAnalysisCard } from "@/components/analysis-card"
 import { ConnectedAnalysisCard } from "@/components/connected-analysis-card"
 import {
   PortfolioSentimentMap,
 } from "@/components/intelligence-feed"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
 import { useAuth } from "@/hooks/use-auth"
-import { documentsAPI, dashboardAPI, analysisAPI } from "@/lib/api"
-import type { DocumentResponse, DashboardStats } from "@/lib/api/types"
+import { useDocumentsWithAnalysis } from "@/hooks/use-documents-with-analysis"
+import { dashboardAPI } from "@/lib/api"
+import type { DashboardStats } from "@/lib/api/types"
 
 
 
 export default function DashboardPage() {
   const { user } = useAuth()
-  const [documents, setDocuments] = useState<DocumentResponse[]>([])
+  const { documents, analysisMap, isLoading: docsLoading } = useDocumentsWithAnalysis(!!user)
   const [stats, setStats] = useState<DashboardStats | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [statsLoading, setStatsLoading] = useState(true)
 
+  // Fetch dashboard stats separately (single call)
   useEffect(() => {
-    const fetchData = async () => {
+    if (!user) return
+
+    const fetchStats = async () => {
       try {
-        const [docs, dashboardStats] = await Promise.all([
-            documentsAPI.list(),
-            dashboardAPI.getStats()
-        ])
-        setDocuments(docs)
-        
-        // Calculate AI Accuracy Score from AI Certainty average
-        let aiAccuracyScore = 0
-        if (docs.length > 0) {
-          const certainties: number[] = []
-          
-          // Fetch analysis for each document to get AI Certainty
-          await Promise.all(
-            docs.map(async (doc) => {
-              try {
-                const analysis = await analysisAPI.getAnalysis(doc.document_id)
-                if (analysis?.confidence_metrics?.metrics) {
-                  const aiCertainty = analysis.confidence_metrics.metrics.find(
-                    m => m.label === "AI Certainty"
-                  )
-                  if (aiCertainty) {
-                    certainties.push(aiCertainty.ratio * 100)
-                  }
-                }
-              } catch (error) {
-                console.error(`Failed to fetch analysis for ${doc.document_id}`, error)
-              }
-            })
-          )
-          
-          // Calculate average
-          if (certainties.length > 0) {
-            aiAccuracyScore = certainties.reduce((sum, val) => sum + val, 0) / certainties.length
-          }
-        }
-        
-        // Update stats with calculated AI accuracy
-        setStats({
-          ...dashboardStats,
-          ai_accuracy_score: aiAccuracyScore
-        })
+        const dashboardStats = await dashboardAPI.getStats()
+        setStats(dashboardStats)
       } catch (error) {
-        console.error("Failed to fetch dashboard data:", error)
+        console.error("Failed to fetch dashboard stats:", error)
       } finally {
-        setIsLoading(false)
+        setStatsLoading(false)
       }
     }
 
-    if (user) {
-        fetchData()
-    }
+    fetchStats()
   }, [user])
 
+  // Calculate AI Accuracy Score from the pre-fetched analysisMap
+  const aiAccuracyScore = (() => {
+    if (analysisMap.size === 0) return 0
 
+    const certainties: number[] = []
+    for (const analysis of analysisMap.values()) {
+      if (analysis?.confidence_metrics?.metrics) {
+        const aiCertainty = analysis.confidence_metrics.metrics.find(
+          (m) => m.label === "AI Certainty"
+        )
+        if (aiCertainty) {
+          certainties.push(aiCertainty.ratio * 100)
+        }
+      }
+    }
+
+    if (certainties.length === 0) return 0
+    return certainties.reduce((sum, val) => sum + val, 0) / certainties.length
+  })()
+
+  // Merge AI accuracy into stats
+  const mergedStats = stats
+    ? { ...stats, ai_accuracy_score: aiAccuracyScore }
+    : null
+
+  const isLoading = docsLoading || statsLoading
 
   return (
     <AppShell>
@@ -99,17 +85,17 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
           <StatCard
             title="Total Reports"
-            value={stats?.total_reports.toString() || "0"}
+            value={mergedStats?.total_reports.toString() || "0"}
             icon={FileText}
             badge={{ text: "Active", variant: "success" }}
           />
-          <PortfolioSentimentMap sentimentDistribution={stats?.sentiment_distribution} />
+          <PortfolioSentimentMap sentimentDistribution={mergedStats?.sentiment_distribution} />
           <StatCard
             title="AI Accuracy Score"
-            value={`${(stats?.ai_accuracy_score || 0).toFixed(1)}%`}
+            value={`${(mergedStats?.ai_accuracy_score || 0).toFixed(1)}%`}
             icon={Sparkles}
             badge={(() => {
-              const score = stats?.ai_accuracy_score || 0
+              const score = mergedStats?.ai_accuracy_score || 0
               if (score >= 80) return { text: "Optimal", variant: "success" as const }
               if (score >= 60) return { text: "Good", variant: "default" as const }
               return { text: "Needs Improvement", variant: "destructive" as const }
@@ -143,6 +129,7 @@ export default function DashboardPage() {
                     ticker={doc.ticker}
                     filename={doc.filename}
                     createdAt={doc.created_at}
+                    prefetchedAnalysis={analysisMap.get(doc.document_id) ?? undefined}
                 />
                 ))}
                 <NewAnalysisCard />

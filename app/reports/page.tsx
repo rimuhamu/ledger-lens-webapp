@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import {
   Search,
@@ -19,9 +19,10 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
-import { documentsAPI, analysisAPI } from "@/lib/api"
+import { documentsAPI } from "@/lib/api"
+import { useDocumentsWithAnalysis } from "@/hooks/use-documents-with-analysis"
 import { toast } from "sonner"
-import type { DocumentResponse, AnalysisResponse } from "@/lib/api/types"
+import type { AnalysisResponse } from "@/lib/api/types"
 
 interface ReportData {
   id: string
@@ -59,78 +60,60 @@ const sentimentConfig = {
   },
 }
 
+function buildReportFromAnalysis(
+  docId: string,
+  ticker: string,
+  filename: string,
+  createdAt: string,
+  analysis: AnalysisResponse | null | undefined
+): ReportData {
+  let sentiment: "bullish" | "bearish" | "neutral" = "neutral"
+  let sentimentScore = 0
+  let confidence = 0
+  const isLoading = analysis === undefined // undefined = still loading, null = no data
+
+  if (analysis?.intelligence_hub) {
+    sentimentScore = analysis.intelligence_hub.sentiment.score
+    if (sentimentScore >= 60) sentiment = "bullish"
+    if (sentimentScore <= 40) sentiment = "bearish"
+
+    const aiCertainty = analysis.confidence_metrics?.metrics?.find(
+      (m) => m.label === "AI Certainty"
+    )
+    confidence = aiCertainty ? aiCertainty.ratio * 100 : 0
+  }
+
+  return {
+    id: docId,
+    ticker,
+    company: filename,
+    reportType: "Annual Report",
+    date: new Date(createdAt).toLocaleDateString(),
+    sentiment,
+    sentimentScore,
+    confidence,
+    slug: docId,
+    isLoading,
+  }
+}
+
 export default function ReportsPage() {
   const [search, setSearch] = useState("")
-  const [reports, setReports] = useState<ReportData[]>([])
-  const [loading, setLoading] = useState(true)
+  const { documents, analysisMap, isLoading: loading } = useDocumentsWithAnalysis()
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set())
 
-  useEffect(() => {
-    const fetchDocuments = async () => {
-      try {
-        const docs = await documentsAPI.list()
-        
-        // Initial state for reports with loading status
-        const initialReports: ReportData[] = docs.map(doc => ({
-          id: doc.document_id,
-          ticker: doc.ticker,
-          company: doc.filename, // Using filename as company name for now
-          reportType: "Annual Report", // Placeholder
-          date: new Date(doc.created_at).toLocaleDateString(),
-          sentiment: "neutral",
-          sentimentScore: 0,
-          confidence: 0,
-          slug: doc.document_id,
-          isLoading: true
-        }))
-        
-        setReports(initialReports)
-        setLoading(false)
-
-        // Fetch analysis for each document
-        docs.forEach(async (doc) => {
-          try {
-            const analysis = await analysisAPI.getAnalysis(doc.document_id)
-            if (analysis && analysis.intelligence_hub) {
-              const score = analysis.intelligence_hub.sentiment.score
-              let sentiment: "bullish" | "bearish" | "neutral" = "neutral"
-              if (score >= 60) sentiment = "bullish"
-              if (score <= 40) sentiment = "bearish"
-              
-              setReports(prev => prev.map(r => 
-                r.id === doc.document_id 
-                  ? { 
-                      ...r, 
-                      sentiment, 
-                      sentimentScore: score,
-                      // Use actual confidence metric if available, otherwise fallback to calculation
-                      confidence: analysis.confidence_metrics?.metrics?.find(m => m.label === "AI Certainty")?.ratio 
-                        ? (analysis.confidence_metrics.metrics.find(m => m.label === "AI Certainty")!.ratio * 100)
-                        : (85 + (Math.abs(score - 50) / 50) * 10),
-                      isLoading: false
-                    } 
-                  : r
-              ))
-            } else {
-               setReports(prev => prev.map(r => 
-                r.id === doc.document_id ? { ...r, isLoading: false } : r
-              ))
-            }
-          } catch (error) {
-            console.error(`Failed to fetch analysis for ${doc.document_id}`, error)
-             setReports(prev => prev.map(r => 
-                r.id === doc.document_id ? { ...r, isLoading: false } : r
-              ))
-          }
-        })
-
-      } catch (error) {
-        console.error("Failed to fetch documents:", error)
-        setLoading(false)
-      }
-    }
-
-    fetchDocuments()
-  }, [])
+  // Build report data from the pre-fetched documents + analysisMap
+  const reports: ReportData[] = documents
+    .filter((doc) => !deletedIds.has(doc.document_id))
+    .map((doc) =>
+      buildReportFromAnalysis(
+        doc.document_id,
+        doc.ticker,
+        doc.filename,
+        doc.created_at,
+        analysisMap.get(doc.document_id)
+      )
+    )
 
   const filtered = reports.filter(
     (r) =>
@@ -142,18 +125,6 @@ export default function ReportsPage() {
     e.preventDefault()
     e.stopPropagation()
 
-    // No need for confirm dialog if we use toast with undo or just clear feedback
-    // But user asked for confirmation. We can use a sonner toast with action or just keep the confirm for now and show progress.
-    // "use toast to confirm deletion" -> this might mean using a toast to ask for confirmation, OR using toast to *acknowledge* the confirmation and show progress.
-    // Standard pattern: Click delete -> Confirm Dialog -> Toast Loading -> Toast Success/Error.
-    
-    // User said: "use toast to confirm deletion" - this is ambiguous. It could mean "replace window.confirm with a toast that has a confirm button".
-    // "and show the progress" -> implies async state.
-    
-    // Let's stick to window.confirm for safety unless requested otherwise, but maybe wrapping the delete action in a toast promise is what they primarily want for "show progress".
-    // Actually, "toast to confirm" sounds like "Toast: Are you sure? [Delete] [Cancel]".
-    // Let's implement a toast-based confirmation.
-    
     toast("Are you sure you want to delete this report?", {
       action: {
         label: "Delete",
@@ -163,7 +134,7 @@ export default function ReportsPage() {
              toast.promise(promise, {
                loading: 'Deleting report...',
                success: () => {
-                 setReports(prev => prev.filter(report => report.id !== id))
+                 setDeletedIds((prev) => new Set(prev).add(id))
                  return 'Report deleted successfully'
                },
                error: 'Failed to delete report',
