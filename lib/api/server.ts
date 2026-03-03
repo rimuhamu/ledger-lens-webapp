@@ -34,7 +34,7 @@ async function createServerClient(): Promise<AxiosInstance> {
 export const serverDashboardAPI = {
   async getStats(): Promise<DashboardStats> {
     const client = await createServerClient()
-    const response = await client.get<DashboardStats>('/api/dashboard/stats')
+    const response = await client.get<DashboardStats>('/dashboard/stats')
     return response.data
   },
 }
@@ -45,13 +45,13 @@ export const serverDashboardAPI = {
 export const serverDocumentsAPI = {
   async list(): Promise<DocumentResponse[]> {
     const client = await createServerClient()
-    const response = await client.get<DocumentResponse[]>('/api/documents')
+    const response = await client.get<DocumentResponse[]>('/documents')
     return response.data
   },
   
   async get(documentId: string): Promise<DocumentResponse> {
     const client = await createServerClient()
-    const response = await client.get<DocumentResponse>(`/api/documents/${documentId}`)
+    const response = await client.get<DocumentResponse>(`/documents/${documentId}`)
     return response.data
   },
 }
@@ -63,7 +63,7 @@ export const serverAnalysisAPI = {
   async getAnalysis(documentId: string): Promise<AnalysisResponse | null> {
     const client = await createServerClient()
     try {
-      const response = await client.get<AnalysisResponse>(`/api/documents/${documentId}/analysis`)
+      const response = await client.get<AnalysisResponse>(`/documents/${documentId}/analysis`)
       return response.data
     } catch (error: any) {
       if (error.response?.status === 404) {
@@ -81,7 +81,7 @@ export const serverAnalysisAPI = {
     await Promise.all(
       documentIds.map(async (docId) => {
         try {
-          const response = await client.get<AnalysisResponse>(`/api/documents/${docId}/analysis`)
+          const response = await client.get<AnalysisResponse>(`/documents/${docId}/analysis`)
           results.set(docId, response.data)
         } catch (error) {
           // Skip if analysis doesn't exist
@@ -100,7 +100,7 @@ export const serverAnalysisAPI = {
 export const serverAuthAPI = {
   async getMe() {
     const client = await createServerClient()
-    const response = await client.get('/api/auth/me')
+    const response = await client.get('/auth/me')
     return response.data
   },
 }
